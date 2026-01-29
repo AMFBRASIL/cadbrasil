@@ -14,6 +14,22 @@ GERENCIANET_CERTIFICATE_PATH=certificados/certificado.p12
 
 **Importante:** arquivos `.p12` não são versionados no Git (estão no `.gitignore`).
 
+### Vercel / Serverless (sem arquivo no repositório)
+
+Na Vercel (ou outro ambiente serverless) não há pasta `certificados/` no deploy. Use a variável **`GERENCIANET_CERTIFICATE_BASE64`** com o conteúdo do .p12 em base64:
+
+1. No seu computador, gere o base64 do arquivo .p12 (uma linha, sem quebras):
+   ```bash
+   # Linux/macOS
+   base64 -w0 server/certificados/producao-790387-LicitacoesCadbrasil.p12
+   # Windows (PowerShell)
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("server\certificados\producao-790387-LicitacoesCadbrasil.p12"))
+   ```
+2. No painel da Vercel: **Settings → Environment Variables** → crie `GERENCIANET_CERTIFICATE_BASE64` e cole o valor (não precisa definir `GERENCIANET_CERTIFICATE_PATH`).
+3. Faça um novo deploy.
+
+O código prioriza `GERENCIANET_CERTIFICATE_BASE64`: se estiver definida, o certificado é decodificado e escrito em arquivo temporário em tempo de execução.
+
 ---
 
 ## Erro "Forbidden" (403) ao gerar PIX ou boleto

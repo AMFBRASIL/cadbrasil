@@ -1,6 +1,7 @@
 import Gerencianet from "gn-api-sdk-node";
 import fs from "fs";
 import path from "path";
+import os from "os";
 import https from "https";
 import { fileURLToPath } from "url";
 
@@ -34,11 +35,41 @@ function extrairMensagemErro(err) {
   }
 }
 
-/** Verifica se certificado existe e retorna caminho absoluto. */
+/** Cache do caminho do certificado quando usado via GERENCIANET_CERTIFICATE_BASE64 (Vercel/serverless). */
+let cachedCertPathFromBase64 = null;
+
+/** Verifica se certificado existe e retorna caminho absoluto. Suporta:
+ * 1) GERENCIANET_CERTIFICATE_BASE64 — conteúdo do .p12 em base64 (para Vercel/serverless, sem arquivo no repo)
+ * 2) GERENCIANET_CERTIFICATE_PATH — caminho relativo ao server/ (ex: certificados/producao.p12)
+ */
 function resolveCertPath() {
+  const base64 = process.env.GERENCIANET_CERTIFICATE_BASE64;
+  if (base64 && typeof base64 === "string") {
+    const trimmed = base64.trim().replace(/\s/g, "");
+    if (trimmed.length > 0) {
+      if (cachedCertPathFromBase64 && fs.existsSync(cachedCertPathFromBase64)) {
+        return cachedCertPathFromBase64;
+      }
+      try {
+        const buf = Buffer.from(trimmed, "base64");
+        if (buf.length < 200) return null;
+        const tmpPath = path.join(os.tmpdir(), "gerencianet-cert.p12");
+        fs.writeFileSync(tmpPath, buf, { mode: 0o600 });
+        cachedCertPathFromBase64 = tmpPath;
+        if (process.env.NODE_ENV === "development") {
+          console.log("[Gerencianet] Certificado carregado a partir de GERENCIANET_CERTIFICATE_BASE64 (temp):", tmpPath);
+        }
+        return tmpPath;
+      } catch (e) {
+        console.warn("[Gerencianet] Falha ao decodificar GERENCIANET_CERTIFICATE_BASE64:", e?.message);
+        return null;
+      }
+    }
+  }
+
   let raw = process.env.GERENCIANET_CERTIFICATE_PATH;
   if (!raw || typeof raw !== "string") return null;
-  raw = raw.trim().replace(/^["']|["']$/g, ""); // remove aspas se vieram do .env
+  raw = raw.trim().replace(/^["']|["']$/g, "");
   if (!raw) return null;
   const certPath = path.resolve(__dirname, "..", raw);
   return fs.existsSync(certPath) ? certPath : null;
