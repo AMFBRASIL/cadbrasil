@@ -15,28 +15,12 @@ testConnection().catch((err) => {
   console.error("[STARTUP] Falha ao testar conexão MySQL:", err.message);
 });
 
-const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:8080,http://localhost:5173")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
-
-// Log para debug (remover em produção se necessário)
-console.log("[CORS] Origens permitidas:", corsOrigins);
+// CORS liberado para todos os hosts (sem restrição por origem)
+console.log("[CORS] Liberado para todos os hosts");
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Permitir requisições sem origin (ex: Postman, curl)
-      if (!origin) return callback(null, true);
-      
-      // Verificar se a origin está na lista permitida
-      if (corsOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log("[CORS] Origin bloqueada:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true, // reflete a origin da requisição (aceita qualquer host)
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
