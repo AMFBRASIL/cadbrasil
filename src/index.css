@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Governmental Green palette - sóbrio e institucional */
+    --background: 0 0% 99%;
+    --foreground: 200 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 20% 15%;
+
+    /* Primary: Dark Government Green */
+    --primary: 158 64% 22%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Neutral Gray */
+    --secondary: 200 10% 96%;
+    --secondary-foreground: 200 20% 15%;
+
+    /* Muted */
+    --muted: 200 10% 95%;
+    --muted-foreground: 200 10% 40%;
+
+    /* Accent: Government Green */
+    --accent: 158 55% 28%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Trust: Official Green */
+    --trust: 158 64% 22%;
+    --trust-foreground: 0 0% 100%;
+
+    /* Warning/Attention */
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 15% 90%;
+    --input: 200 15% 90%;
+    --ring: 158 64% 22%;
+
+    --radius: 0.375rem;
+
+    /* Solid institutional backgrounds */
+    --gradient-hero: hsl(158 64% 22%);
+    --gradient-cta: hsl(158 55% 28%);
+    --gradient-trust: hsl(158 64% 22%);
+    
+    /* Minimal shadows */
+    --shadow-soft: 0 1px 3px 0 hsl(200 20% 15% / 0.1);
+    --shadow-card: 0 1px 3px 0 hsl(200 20% 15% / 0.1), 0 1px 2px -1px hsl(200 20% 15% / 0.1);
+    --shadow-cta: 0 4px 6px -1px hsl(158 64% 22% / 0.1);
+    --shadow-elevated: 0 4px 6px -1px hsl(200 20% 15% / 0.1);
+
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 200 10% 26%;
+    --sidebar-primary: 158 64% 22%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 10% 96%;
+    --sidebar-accent-foreground: 158 64% 22%;
+    --sidebar-border: 200 10% 91%;
+    --sidebar-ring: 158 55% 28%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 100% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 160 84% 45%;
+    --accent-foreground: 222 47% 11%;
+
+    --trust: 210 100% 60%;
+    --trust-foreground: 222 47% 11%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 210 100% 60%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .cta-gradient {
+    background: var(--gradient-cta);
+  }
+
+  .trust-gradient {
+    background: var(--gradient-trust);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-cta {
+    box-shadow: var(--shadow-cta);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .text-gradient {
+    background: var(--gradient-trust);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes slide-up {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

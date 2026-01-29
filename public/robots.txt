@@ -1,0 +1,42 @@
+# robots.txt for CADBRASIL
+# https://cadbrasil.com.br
+
+User-agent: *
+Allow: /
+
+# Bloquear página de cadastro (contém formulários privados e não deve ser indexada)
+Disallow: /cadastro
+
+# Bloquear API endpoints
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://cadbrasil.com.br/sitemap.xml
+
+# Crawl-delay para evitar sobrecarga (1 segundo entre requisições)
+Crawl-delay: 1
+
+# Bots específicos - Permitir acesso completo
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Bloquear bots maliciosos ou desnecessários
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
