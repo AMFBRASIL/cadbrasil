@@ -383,18 +383,23 @@ router.get("/cnpj/:cnpj", async (req, res) => {
     }
 
     if (!response.ok) {
-      const errorMessage = data.message || data.error || data.resultado_txt || data.detail || `Erro ${response.status}: ${response.statusText}`;
+      let errorMessage = data.message || data.error || data.resultado_txt || data.detail || `Erro ${response.status}: ${response.statusText}`;
+      if (response.status === 404) {
+        errorMessage = "CNPJ não encontrado na base da Receita Federal. Verifique o número digitado ou preencha os dados da empresa manualmente.";
+      } else if (typeof errorMessage !== "string") {
+        errorMessage = "CNPJ não encontrado ou inválido.";
+      }
       console.error(`[GET /api/cnpj/:cnpj] Erro ${response.status}:`, { message: errorMessage, cnpj });
       return res.status(response.status).json({
         success: false,
-        error: typeof errorMessage === "string" ? errorMessage : "CNPJ não encontrado ou inválido.",
+        error: errorMessage,
         details: process.env.NODE_ENV === "development" ? data : undefined,
       });
     }
 
-    // CNPJ.ws pode retornar resultado=0 em corpo JSON
+    // CNPJ.ws pode retornar resultado=0 em corpo JSON (CNPJ inexistente)
     if (data.resultado === 0 || data.resultado === "0") {
-      const msg = data.resultado_txt || "CNPJ não encontrado ou inválido.";
+      const msg = "CNPJ não encontrado na base da Receita Federal. Verifique o número digitado ou preencha os dados da empresa manualmente.";
       return res.status(404).json({ success: false, error: msg });
     }
 

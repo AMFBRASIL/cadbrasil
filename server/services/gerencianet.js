@@ -64,11 +64,17 @@ function validateP12File(certPath) {
   }
 }
 
+/** Remove aspas e espaços/novas linhas das variáveis do .env (evita "Malformed authorization header"). */
+function sanitizeEnv(value) {
+  if (value == null || typeof value !== "string") return "";
+  return value.trim().replace(/^["']|["']$/g, "").trim();
+}
+
 // Configuração da Gerencianet
 const getGerencianetConfig = () => {
   const sandbox = process.env.GERENCIANET_SANDBOX === "true";
-  const clientId = process.env.GERENCIANET_CLIENT_ID;
-  const clientSecret = process.env.GERENCIANET_CLIENT_SECRET;
+  const clientId = sanitizeEnv(process.env.GERENCIANET_CLIENT_ID);
+  const clientSecret = sanitizeEnv(process.env.GERENCIANET_CLIENT_SECRET);
 
   if (!clientId || !clientSecret) {
     throw new Error("GERENCIANET_CLIENT_ID e GERENCIANET_CLIENT_SECRET são obrigatórios no .env");
@@ -254,8 +260,8 @@ export async function gerarBoleto(dados) {
 export async function diagnosticoBoleto() {
   const out = { ok: false, boletoStatus: null, charge_id: null, error: null, message: "", config: {} };
   try {
-    const clientId = process.env.GERENCIANET_CLIENT_ID;
-    const clientSecret = process.env.GERENCIANET_CLIENT_SECRET;
+    const clientId = sanitizeEnv(process.env.GERENCIANET_CLIENT_ID);
+    const clientSecret = sanitizeEnv(process.env.GERENCIANET_CLIENT_SECRET);
     const certPath = resolveCertPath();
     const sandbox = process.env.GERENCIANET_SANDBOX === "true";
     out.config = { hasClientId: !!clientId, hasClientSecret: !!clientSecret, hasCert: !!certPath, sandbox };
@@ -445,8 +451,8 @@ export async function consultarPix(txid) {
 function getPixOAuthToken() {
   const certPath = resolveCertPath();
   if (!certPath) throw new Error("Certificado .p12 não encontrado. Configure GERENCIANET_CERTIFICATE_PATH.");
-  const clientId = process.env.GERENCIANET_CLIENT_ID;
-  const clientSecret = process.env.GERENCIANET_CLIENT_SECRET;
+  const clientId = sanitizeEnv(process.env.GERENCIANET_CLIENT_ID);
+  const clientSecret = sanitizeEnv(process.env.GERENCIANET_CLIENT_SECRET);
   if (!clientId || !clientSecret) throw new Error("GERENCIANET_CLIENT_ID e GERENCIANET_CLIENT_SECRET são obrigatórios.");
 
   const sandbox = process.env.GERENCIANET_SANDBOX === "true";
@@ -509,8 +515,8 @@ export async function diagnosticoPix() {
       return { ok: false, step: "oauth", error: "Certificado .p12 não encontrado.", raw: null };
     }
     LOG("DIAG 2/4", "Certificado OK", { path: certPath });
-    const clientId = process.env.GERENCIANET_CLIENT_ID;
-    const clientSecret = process.env.GERENCIANET_CLIENT_SECRET;
+    const clientId = sanitizeEnv(process.env.GERENCIANET_CLIENT_ID);
+    const clientSecret = sanitizeEnv(process.env.GERENCIANET_CLIENT_SECRET);
     if (!clientId || !clientSecret) {
       LOG("DIAG ERRO", "Parou em 2/4: client_id ou client_secret ausentes");
       return { ok: false, step: "oauth", error: "GERENCIANET_CLIENT_ID e GERENCIANET_CLIENT_SECRET são obrigatórios.", raw: null };

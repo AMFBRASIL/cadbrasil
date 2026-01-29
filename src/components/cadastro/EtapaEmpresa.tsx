@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buscarCNPJ as buscarCNPJAPI, verificarClienteExistente as verificarClienteExistenteAPI } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import ModalEmailCadastrado from "./ModalEmailCadastrado";
+import ModalBuscaCNPJ from "./ModalBuscaCNPJ";
 
 interface EtapaEmpresaProps {
   dados: CadastroData;
@@ -129,15 +130,19 @@ const EtapaEmpresa = ({ dados, atualizarDados, onProximo, onAnterior }: EtapaEmp
       setDocumentoVerificado(false);
       setErroBuscaCNPJ(true); // Marcar que houve erro para liberar campos
       
-      // Mensagem de erro amigável com tratamento especial para "Quota Exceeded"
+      // Mensagem de erro amigável: 404 (não encontrado), quota e genérico
       let errorMessage = error instanceof Error ? error.message : "Não foi possível buscar os dados do CNPJ";
       let errorTitle = "Erro ao buscar CNPJ";
-      
-      if (errorMessage.toLowerCase().includes("quota") || errorMessage.toLowerCase().includes("exceeded") || errorMessage.toLowerCase().includes("limite")) {
+
+      const msgLower = errorMessage.toLowerCase();
+      if (msgLower.includes("quota") || msgLower.includes("exceeded") || msgLower.includes("limite")) {
         errorTitle = "Limite de consultas atingido";
         errorMessage = "O limite de consultas à API de CNPJ foi atingido. Por favor, preencha os dados manualmente.";
+      } else if (msgLower.includes("404") || msgLower.includes("not found") || msgLower.includes("não encontrado")) {
+        errorTitle = "CNPJ não encontrado";
+        errorMessage = "Este CNPJ não foi encontrado na base da Receita Federal. Verifique o número digitado ou preencha os dados da empresa manualmente.";
       }
-      
+
       toast({
         variant: "destructive",
         title: errorTitle,
@@ -508,6 +513,9 @@ const EtapaEmpresa = ({ dados, atualizarDados, onProximo, onAnterior }: EtapaEmp
           </div>
         </div>
       )}
+
+      {/* Modal de busca CNPJ (abre ao consultar, fecha quando termina) */}
+      <ModalBuscaCNPJ isOpen={buscandoCNPJ} />
 
       {/* Modal com Email Cadastrado */}
       <ModalEmailCadastrado

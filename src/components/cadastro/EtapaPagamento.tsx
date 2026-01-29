@@ -25,6 +25,8 @@ interface EtapaPagamentoProps {
   vencimentoDisplay?: string;
   cliente: CadastroData;
   onPagamentoConfirmado: () => void;
+  /** Chamado quando o usuário abre o modal do boleto (para não exibir o modal de desconto depois) */
+  onBoletoModalAberto?: () => void;
 }
 
 const EtapaPagamento = ({
@@ -37,6 +39,7 @@ const EtapaPagamento = ({
   vencimentoDisplay,
   cliente,
   onPagamentoConfirmado,
+  onBoletoModalAberto,
 }: EtapaPagamentoProps) => {
   const { toast } = useToast();
   const [showModalBoleto, setShowModalBoleto] = useState(false);
@@ -108,7 +111,10 @@ const EtapaPagamento = ({
   const gerarBoletoPagamento = async (openModal: boolean) => {
     if (!idPedido || loadingBoleto) return;
     if (boletoGerado) {
-      if (openModal) setShowModalBoleto(true);
+      if (openModal) {
+        setShowModalBoleto(true);
+        onBoletoModalAberto?.();
+      }
       return;
     }
 
@@ -120,7 +126,10 @@ const EtapaPagamento = ({
       if (response.success && link) {
         setUrlBoleto(link);
         setBoletoGerado(true);
-        if (openModal) setShowModalBoleto(true);
+        if (openModal) {
+          setShowModalBoleto(true);
+          onBoletoModalAberto?.();
+        }
       } else {
         throw new Error("Erro ao gerar boleto");
       }
@@ -350,7 +359,14 @@ const EtapaPagamento = ({
 
                 {/* Botão Visualizar Boleto */}
                 <Button
-                  onClick={() => (boletoGerado ? setShowModalBoleto(true) : gerarBoletoPagamento(true))}
+                  onClick={() => {
+                    if (boletoGerado) {
+                      setShowModalBoleto(true);
+                      onBoletoModalAberto?.();
+                    } else {
+                      gerarBoletoPagamento(true);
+                    }
+                  }}
                   disabled={loadingBoleto}
                   className="w-full bg-blue-600 text-white hover:bg-blue-700 gap-2 font-semibold disabled:opacity-50"
                   size="default"

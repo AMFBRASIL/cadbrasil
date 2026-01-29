@@ -46,6 +46,7 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
   const [showModalDesconto, setShowModalDesconto] = useState(false);
   const [valorComDesconto, setValorComDesconto] = useState<number | null>(null);
   const [tempoGuiaGerada, setTempoGuiaGerada] = useState<number | null>(null);
+  const [usuarioAbriuModalBoleto, setUsuarioAbriuModalBoleto] = useState(false);
   const pagamentoRef = useRef<HTMLDivElement>(null);
   
   const valorOriginal = 985.00;
@@ -143,13 +144,13 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
   // Estado para controlar se já mostrou o modal (para não mostrar repetidamente)
   const [modalDescontoJaMostrado, setModalDescontoJaMostrado] = useState(false);
 
-  // Detectar tentativa de sair da página após 1 minuto e meio de gerar a guia
+  // Detectar tentativa de sair da página após 1 minuto e meio de gerar a guia (só se o cliente NÃO abriu o modal do boleto)
   useEffect(() => {
-    if (!podeMostrarModalDesconto || pagamentoConfirmado || showModalDesconto || modalDescontoJaMostrado) return;
+    if (!podeMostrarModalDesconto || pagamentoConfirmado || showModalDesconto || modalDescontoJaMostrado || usuarioAbriuModalBoleto) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Se pode mostrar o modal e ainda não mostrou, prevenir saída e marcar para mostrar
-      if (podeMostrarModalDesconto && !modalDescontoJaMostrado) {
+      // Se pode mostrar o modal, ainda não mostrou e usuário não abriu o boleto, prevenir saída e marcar para mostrar
+      if (podeMostrarModalDesconto && !modalDescontoJaMostrado && !usuarioAbriuModalBoleto) {
         e.preventDefault();
         e.returnValue = '';
         setModalDescontoJaMostrado(true);
@@ -159,8 +160,8 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
     };
 
     const handleVisibilityChange = () => {
-      // Se a página está sendo ocultada (usuário mudando de aba ou fechando)
-      if (document.hidden && podeMostrarModalDesconto && !showModalDesconto && !modalDescontoJaMostrado) {
+      // Se a página está sendo ocultada e o usuário nunca abriu o modal do boleto
+      if (document.hidden && podeMostrarModalDesconto && !showModalDesconto && !modalDescontoJaMostrado && !usuarioAbriuModalBoleto) {
         setModalDescontoJaMostrado(true);
         setShowModalDesconto(true);
       }
@@ -168,8 +169,8 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
 
     // Detectar quando o mouse sai da janela (tentativa de fechar)
     const handleMouseLeave = (e: MouseEvent) => {
-      // Se o mouse saiu pela parte superior da janela (provavelmente tentando fechar)
-      if (e.clientY < 0 && podeMostrarModalDesconto && !showModalDesconto && !modalDescontoJaMostrado) {
+      // Se o mouse saiu pela parte superior da janela e o usuário nunca abriu o modal do boleto
+      if (e.clientY < 0 && podeMostrarModalDesconto && !showModalDesconto && !modalDescontoJaMostrado && !usuarioAbriuModalBoleto) {
         setModalDescontoJaMostrado(true);
         setShowModalDesconto(true);
       }
@@ -184,7 +185,7 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [podeMostrarModalDesconto, pagamentoConfirmado, showModalDesconto, modalDescontoJaMostrado]);
+  }, [podeMostrarModalDesconto, pagamentoConfirmado, showModalDesconto, modalDescontoJaMostrado, usuarioAbriuModalBoleto]);
 
   return (
     <>
@@ -472,6 +473,7 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
                   vencimentoDisplay={formatarVencimentoDisplay(vencimentoIso)}
                   cliente={dados}
                   onPagamentoConfirmado={handlePagamentoConfirmado}
+                  onBoletoModalAberto={() => setUsuarioAbriuModalBoleto(true)}
                 />
               </div>
             );
