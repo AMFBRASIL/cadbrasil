@@ -12,6 +12,7 @@ import EtapaRevisao from "@/components/cadastro/EtapaRevisao";
 import CadastroSucesso from "@/components/cadastro/CadastroSucesso";
 import SEO from "@/components/SEO";
 import { Shield, Lock, FileCheck } from "lucide-react";
+import { getUtmForPayload, trackConversion } from "@/lib/utm";
 
 export interface CadastroData {
   // Tipo de Pessoa
@@ -114,6 +115,13 @@ const Cadastro = () => {
     setProtocolo(protocoloRecebido);
     setCadastroConcluido(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Disparar conversão no Google Ads, GTM e Microsoft Ads
+    trackConversion("cadastro_concluido", 985, {
+      protocolo: protocoloRecebido,
+      tipo_servico: dados.tipoServico,
+      tipo_pessoa: dados.tipoPessoa,
+    });
   };
 
   if (cadastroConcluido) {
@@ -251,9 +259,11 @@ const Cadastro = () => {
                   onFinalizar={finalizarCadastro}
                   onSubmit={async () => {
                     const { enviarCadastro } = await import("@/lib/api");
+                    const utmData = getUtmForPayload();
                     const res = await enviarCadastro({
                       ...dados,
                       tipoServico: dados.tipoServico || "novo",
+                      ...utmData,
                     });
                     if (!res.success || !res.protocolo) throw new Error(res.error || "Erro ao enviar.");
                     if (res.idPedido) setIdPedido(res.idPedido);

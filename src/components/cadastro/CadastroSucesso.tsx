@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { CadastroData } from "@/pages/Cadastro";
 import { 
   CheckCircle, 
@@ -9,29 +9,25 @@ import {
   FileSearch,
   Award,
   Clock,
-  ArrowLeft,
   Building2,
   Lock,
   ArrowRight,
+  ArrowLeft,
   Send,
-  FileText,
-  User,
-  Info,
-  Percent
+  Info
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ModalProcessamento from "./ModalProcessamento";
-import ModalDesconto from "./ModalDesconto";
-import EtapaPagamento from "./EtapaPagamento";
 
 interface CadastroSucessoProps {
   dados: CadastroData;
   protocolo: string;
-  idPedido: number | null;
+  idPedido?: number | null; // Mantido para compatibilidade, mas não usado no momento
 }
 
-const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) => {
+const CadastroSucesso = ({ dados, protocolo }: CadastroSucessoProps) => {
+  const navigate = useNavigate();
   const dataAtual = new Date().toLocaleString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
@@ -41,165 +37,45 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
     second: "2-digit",
   });
   const [showModalProcessamento, setShowModalProcessamento] = useState(false);
-  const [pagamentoConfirmado, setPagamentoConfirmado] = useState(false);
-  const [mostrarPagamento, setMostrarPagamento] = useState(false);
-  const [showModalDesconto, setShowModalDesconto] = useState(false);
-  const [valorComDesconto, setValorComDesconto] = useState<number | null>(null);
-  const [tempoGuiaGerada, setTempoGuiaGerada] = useState<number | null>(null);
-  const [usuarioAbriuModalBoleto, setUsuarioAbriuModalBoleto] = useState(false);
-  const pagamentoRef = useRef<HTMLDivElement>(null);
-  
-  const valorOriginal = 985.00;
-  const descontoPercentual = 10;
-  const valorDesconto = valorOriginal * (descontoPercentual / 100);
-  const valorFinalComDesconto = valorOriginal - valorDesconto;
-
-  // Vencimento em YYYY-MM-DD (30 dias a partir de hoje) — formato da API Gerencianet
-  const calcularVencimento = () => {
-    const data = new Date();
-    data.setDate(data.getDate() + 30);
-    const y = data.getFullYear();
-    const m = String(data.getMonth() + 1).padStart(2, "0");
-    const d = String(data.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
-
-  // Exibição pt-BR (dd/mm/yyyy) a partir de YYYY-MM-DD
-  const formatarVencimentoDisplay = (iso: string) => {
-    const [y, m, d] = iso.split("-");
-    return `${d}/${m}/${y}`;
-  };
-
-  const handleEnviarDocumentacao = () => {
-    setShowModalProcessamento(true);
-  };
 
   const handleProcessamentoComplete = () => {
     setShowModalProcessamento(false);
-    window.location.href = "https://fornecedor.cadbr.com.br";
+    window.open("https://fornecedor.cadbr.com.br", "_blank");
   };
 
-  const handlePagamentoConfirmado = () => {
-    setPagamentoConfirmado(true);
-    setMostrarPagamento(false);
-  };
-
-  const handleGerarGuiaPagamento = () => {
-    setMostrarPagamento(true);
-    // Registrar o tempo em que a guia foi gerada (1 minuto e meio = 90000ms)
-    setTempoGuiaGerada(Date.now());
-    // Scroll automático para a seção de pagamento após um pequeno delay
-    setTimeout(() => {
-      pagamentoRef.current?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }, 100);
-  };
-
-  const handleAplicarDesconto = () => {
-    setValorComDesconto(valorFinalComDesconto);
-    setShowModalDesconto(false);
-    // Scroll para a seção de pagamento para mostrar o novo valor
-    setTimeout(() => {
-      pagamentoRef.current?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }, 100);
-  };
-
-  const handleFecharModalDesconto = () => {
-    setShowModalDesconto(false);
-    // Quando fechar sem aplicar desconto, permitir sair normalmente
-    // Removendo o listener de beforeunload temporariamente
-  };
-
-  // Scroll automático quando mostrarPagamento muda para true
-  useEffect(() => {
-    if (mostrarPagamento && pagamentoRef.current) {
-      setTimeout(() => {
-        pagamentoRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 100);
-    }
-  }, [mostrarPagamento]);
-
-  // Estado para controlar se já passou 1 minuto e meio e pode mostrar o modal
-  const [podeMostrarModalDesconto, setPodeMostrarModalDesconto] = useState(false);
-
-  // Timer: após 1 minuto e meio de gerar a guia, permitir mostrar o modal ao tentar sair
-  useEffect(() => {
-    if (!tempoGuiaGerada || pagamentoConfirmado) return;
-
-    const timer = setTimeout(() => {
-      setPodeMostrarModalDesconto(true);
-    }, 1.5 * 60 * 1000); // 1 minuto e meio (90 segundos)
-
-    return () => clearTimeout(timer);
-  }, [tempoGuiaGerada, pagamentoConfirmado]);
-
-  // Estado para controlar se já mostrou o modal (para não mostrar repetidamente)
-  const [modalDescontoJaMostrado, setModalDescontoJaMostrado] = useState(false);
-
-  // Detectar tentativa de sair da página após 1 minuto e meio de gerar a guia (só se o cliente NÃO abriu o modal do boleto)
-  useEffect(() => {
-    if (!podeMostrarModalDesconto || pagamentoConfirmado || showModalDesconto || modalDescontoJaMostrado || usuarioAbriuModalBoleto) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Se pode mostrar o modal, ainda não mostrou e usuário não abriu o boleto, prevenir saída e marcar para mostrar
-      if (podeMostrarModalDesconto && !modalDescontoJaMostrado && !usuarioAbriuModalBoleto) {
-        e.preventDefault();
-        e.returnValue = '';
-        setModalDescontoJaMostrado(true);
-        setShowModalDesconto(true);
-        return '';
-      }
+  // Navegar para a tela de credenciamento com os dados do cadastro
+  const handleIrParaCredenciamento = () => {
+    // Dados do credenciamento
+    const dadosCredenciamento = {
+      protocolo: protocolo,
+      cnpj: dados.cnpj || "",
+      razaoSocial: dados.razaoSocial || "",
+      nomeFantasia: dados.nomeFantasia || "",
+      email: dados.emailResponsavel || "",
+      telefone: dados.telefoneResponsavel || "",
+      responsavel: dados.nomeResponsavel || "",
+      cpfResponsavel: dados.cpfResponsavel || "",
+      endereco: dados.logradouro ? `${dados.logradouro}, ${dados.numero}` : "",
+      cidade: dados.cidade || "",
+      uf: dados.uf || "",
+      cep: dados.cep || "",
+      tipoServico: dados.tipoServico === "renovacao" ? "Renovação SICAF" : "Novo Cadastro SICAF",
+      modalidadeLicitacao: dados.objetivoLicitacao || "",
+      dataCriacao: dataAtual
     };
 
-    const handleVisibilityChange = () => {
-      // Se a página está sendo ocultada e o usuário nunca abriu o modal do boleto
-      if (document.hidden && podeMostrarModalDesconto && !showModalDesconto && !modalDescontoJaMostrado && !usuarioAbriuModalBoleto) {
-        setModalDescontoJaMostrado(true);
-        setShowModalDesconto(true);
-      }
-    };
+    // Salvar no sessionStorage como backup (caso usuário atualize a página)
+    sessionStorage.setItem("dadosCredenciamento", JSON.stringify(dadosCredenciamento));
 
-    // Detectar quando o mouse sai da janela (tentativa de fechar)
-    const handleMouseLeave = (e: MouseEvent) => {
-      // Se o mouse saiu pela parte superior da janela e o usuário nunca abriu o modal do boleto
-      if (e.clientY < 0 && podeMostrarModalDesconto && !showModalDesconto && !modalDescontoJaMostrado && !usuarioAbriuModalBoleto) {
-        setModalDescontoJaMostrado(true);
-        setShowModalDesconto(true);
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [podeMostrarModalDesconto, pagamentoConfirmado, showModalDesconto, modalDescontoJaMostrado, usuarioAbriuModalBoleto]);
+    // Navegar passando os dados via state (não aparece na URL)
+    navigate("/credenciamento", { state: dadosCredenciamento });
+  };
 
   return (
     <>
       <ModalProcessamento
         isOpen={showModalProcessamento}
         onComplete={handleProcessamentoComplete}
-      />
-      <ModalDesconto
-        isOpen={showModalDesconto}
-        onClose={handleFecharModalDesconto}
-        onAplicarDesconto={handleAplicarDesconto}
-        valorOriginal={valorOriginal}
-        valorComDesconto={valorFinalComDesconto}
-        descontoPercentual={descontoPercentual}
       />
     <section className="py-4 md:py-6">
       <div className="container mx-auto px-4">
@@ -216,22 +92,9 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
                   <Clock className="w-4 h-4" />
                   {dataAtual}
                 </p>
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded ${
-                  pagamentoConfirmado 
-                    ? "bg-green-500 text-white border border-green-600" 
-                    : "bg-yellow-400 text-yellow-900 border border-yellow-500"
-                }`}>
-                  {pagamentoConfirmado ? (
-                    <>
-                      <CheckCircle className="w-3 h-3" />
-                      Pagamento Concluído
-                    </>
-                  ) : (
-                    <>
-                      <span className="w-2 h-2 bg-yellow-900 rounded-full animate-pulse" />
-                      Aguardando Pagamento
-                    </>
-                  )}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-yellow-400 text-yellow-900 border border-yellow-500">
+                  <span className="w-2 h-2 bg-yellow-900 rounded-full animate-pulse" />
+                  Aguardando Documentação
                 </span>
               </div>
             </div>
@@ -273,7 +136,7 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
                   Você já concluiu a parte principal do processo.
                 </h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Sua empresa já está apta a participar de licitações, restando apenas a confirmação da Guia de <strong>Pagamento</strong> para que possamos liberar o <strong>Cadastro SICAF Digital</strong> através do portal CadBrasil. Após a confirmação do pagamento, você terá acesso ao <strong>Portal do Fornecedor</strong>, onde poderá enviar toda a documentação obrigatória e acompanhar o status do seu cadastro até a aprovação final no SICAF.
+                  Sua empresa já está apta a participar de licitações. Agora você precisa enviar a <strong>documentação obrigatória</strong> através do <strong>Portal do Fornecedor</strong>. Após o envio, nossa equipe analisará os documentos e dará andamento ao seu <strong>Cadastro SICAF Digital</strong> até a aprovação final.
                 </p>
               </div>
             </div>
@@ -307,81 +170,35 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
                     </div>
                   </div>
 
-                  {/* Etapa 2 - Pagamento da Taxa Anual CADBRASIL */}
-                  {pagamentoConfirmado ? (
-                    <div className="flex gap-4 relative">
-                      <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0 z-10">
-                        <CheckCircle className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 pt-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-primary">Pagamento da Taxa Anual CADBRASIL</h4>
-                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Concluída e Paga
-                          </span>
+                  {/* Etapa 2 - Envio de Documentação (habilitado) */}
+                  <div className="relative">
+                    <div className="bg-primary/5 border-2 border-primary/30 p-4 rounded-lg">
+                      <div className="flex gap-4">
+                        <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-primary/20">
+                          <Upload className="w-5 h-5" />
                         </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <div className="bg-primary/5 border-2 border-primary/30 p-4 rounded-lg">
-                        <div className="flex gap-4">
-                          <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0 z-10 ring-4 ring-primary/20">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 pt-1">
-                            <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                              <div>
-                                <h4 className="font-semibold text-foreground">Pagamento da Taxa Anual CADBRASIL</h4>
-                                <p className="text-primary text-sm mt-1 flex items-center gap-1 font-medium">
-                                  Etapa atual - clique no botão abaixo para gerar guia de pagamento
-                                </p>
-                              </div>
-                              <span className="text-xs bg-green-500 text-white px-3 py-1.5 font-medium rounded">
-                                Em andamento
-                              </span>
+                        <div className="flex-1 pt-1">
+                          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                            <div>
+                              <h4 className="font-semibold text-foreground">Envio de Documentação</h4>
+                              <p className="text-primary text-sm mt-1 flex items-center gap-1 font-medium">
+                                Etapa atual - clique no botão abaixo para enviar seus documentos
+                              </p>
                             </div>
-                            <Button
-                              onClick={handleGerarGuiaPagamento}
-                              className="w-full bg-primary text-white hover:bg-primary/90 gap-2 shadow-lg hover:shadow-xl transition-all"
-                              size="lg"
-                            >
-                              <FileText className="w-5 h-5" />
-                              Gerar Guia de Pagamento
-                            </Button>
+                            <span className="text-xs bg-green-500 text-white px-3 py-1.5 font-medium rounded">
+                              Em andamento
+                            </span>
                           </div>
+                          <Button
+                            onClick={handleIrParaCredenciamento}
+                            className="w-full bg-primary text-white hover:bg-primary/90 gap-2 shadow-lg hover:shadow-xl transition-all"
+                            size="lg"
+                          >
+                            <Upload className="w-5 h-5" />
+                            Enviar Documentação - Clique Aqui
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Etapa 3 - Envio de Documentação */}
-                  <div className={`flex gap-4 relative ${pagamentoConfirmado ? "" : "opacity-60"}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${
-                      pagamentoConfirmado ? "bg-primary text-white" : "bg-muted text-muted-foreground border border-border"
-                    }`}>
-                      <Upload className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 pt-2">
-                      <h4 className={`font-semibold ${pagamentoConfirmado ? "text-primary" : "text-muted-foreground"}`}>
-                        Envio de Documentação
-                      </h4>
-                      <p className={`text-sm mt-1 flex items-center gap-1 ${
-                        pagamentoConfirmado ? "text-foreground" : "text-muted-foreground"
-                      }`}>
-                        {pagamentoConfirmado ? (
-                          <>
-                            <CheckCircle className="w-3 h-3 text-primary" />
-                            Liberada — use o botão abaixo para acessar o Portal do Fornecedor
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-3 h-3" />
-                            Bloqueado até confirmação do pagamento
-                          </>
-                        )}
-                      </p>
                     </div>
                   </div>
 
@@ -417,67 +234,7 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
             </div>
           </div>
 
-          {/* Guia de Processamento do Cadastro SICAF - Só aparece se não estiver mostrando pagamento */}
-          {!mostrarPagamento && !pagamentoConfirmado && (
-            <div className="bg-card border border-border mb-6 rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-6 py-4 border-b border-border flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                <h2 className="font-bold text-foreground">Guia de Processamento do Cadastro SICAF</h2>
-              </div>
-              <div className="p-6">
-                <p className="text-sm text-muted-foreground mb-6">
-                  Para dar continuidade ao seu processo, é necessário realizar o pagamento da Guia de Processamento do Cadastro SICAF, 
-                  efetuado por meio do cadastro digital CadBrasil. Após a confirmação do pagamento, o acesso ao Portal do Fornecedor 
-                  será liberado automaticamente.
-                </p>
-                <Button
-                  onClick={handleGerarGuiaPagamento}
-                  className="w-full bg-primary text-white hover:bg-primary/90 gap-2"
-                  size="lg"
-                >
-                  <FileText className="w-5 h-5" />
-                  Gerar Guia de Pagamento
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Etapa de Pagamento - Aparece quando clicar no botão */}
-          {mostrarPagamento && !pagamentoConfirmado && (() => {
-            const vencimentoIso = calcularVencimento();
-            return (
-              <div ref={pagamentoRef} className="mb-6">
-                {valorComDesconto && (
-                  <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 mb-4 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Percent className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-green-800 mb-1">
-                        Desconto de {descontoPercentual}% Aplicado!
-                      </p>
-                      <p className="text-sm text-green-700">
-                        Valor original: <span className="line-through">R$ {valorOriginal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> → 
-                        Valor com desconto: <span className="font-bold">R$ {valorComDesconto.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <EtapaPagamento
-                  idPedido={idPedido}
-                  protocolo={protocolo}
-                  razaoSocial={dados.razaoSocial}
-                  cnpjCpf={dados.cnpj}
-                  valor={valorComDesconto || valorOriginal}
-                  vencimento={vencimentoIso}
-                  vencimentoDisplay={formatarVencimentoDisplay(vencimentoIso)}
-                  cliente={dados}
-                  onPagamentoConfirmado={handlePagamentoConfirmado}
-                  onBoletoModalAberto={() => setUsuarioAbriuModalBoleto(true)}
-                />
-              </div>
-            );
-          })()}
+          {/* Guia de Processamento e Pagamento removidos - fluxo simplificado */}
 
           {/* Aviso Importante */}
           <div className="bg-yellow-50 border border-yellow-200 p-4 mb-6 rounded-lg">
@@ -490,77 +247,62 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
               <div>
                 <p className="text-sm font-semibold text-yellow-900 mb-1">Importante</p>
                 <p className="text-sm text-yellow-800">
-                  O envio de documentos só será liberado após a confirmação do pagamento. Isso garante a segurança do processo 
-                  e a correta validação do seu cadastro junto ao SICAF.
+                  Para concluir seu cadastro SICAF, envie toda a documentação obrigatória através do Portal do Fornecedor.
+                  Nossa equipe analisará os documentos e dará andamento ao processo.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Seção de Envio de Documentação - Só aparece após pagamento confirmado */}
-          {pagamentoConfirmado && (
-            <div className="bg-card border border-border mb-6 rounded-lg overflow-hidden">
-              <div className="bg-muted/50 px-6 py-4 border-b border-border flex items-center gap-2">
-                <Send className="w-5 h-5 text-primary" />
-                <h2 className="font-bold text-foreground">
-                  ENVIAR DOCUMENTAÇÃO SICAF
-                </h2>
-              </div>
-              <div className="p-6">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Agora você pode enviar toda a documentação obrigatória para completar seu cadastro SICAF através do Portal do Fornecedor.
-                </p>
-                <Button
-                  onClick={handleEnviarDocumentacao}
-                  className="w-full bg-primary text-white hover:bg-primary/90 gap-2"
-                  size="lg"
-                >
-                  <Upload className="w-5 h-5" />
-                  Enviar Documentos SICAF
-                </Button>
-              </div>
+          {/* Seção de Envio de Documentação - Sempre visível */}
+          <div className="bg-card border border-border mb-6 rounded-lg overflow-hidden">
+            <div className="bg-muted/50 px-6 py-4 border-b border-border flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-foreground">
+                ENVIAR DOCUMENTAÇÃO SICAF
+              </h2>
             </div>
-          )}
+            <div className="p-6">
+              <p className="text-sm text-muted-foreground mb-4">
+                Acesse o Portal do Fornecedor para enviar toda a documentação obrigatória e completar seu cadastro SICAF.
+              </p>
+              <Button
+                onClick={handleIrParaCredenciamento}
+                className="w-full bg-primary text-white hover:bg-primary/90 gap-2"
+                size="lg"
+              >
+                <Upload className="w-5 h-5" />
+                Enviar Documentação - Clique Aqui
+              </Button>
+            </div>
+          </div>
 
-          {/* O que acontece após o pagamento? */}
+          {/* Próximos Passos */}
           <div className="bg-card border border-border mb-6 rounded-lg overflow-hidden">
             <div className="bg-muted/50 px-6 py-4 border-b border-border flex items-center gap-2">
               <ArrowRight className="w-5 h-5 text-primary" />
-              <h2 className="font-bold text-foreground">O que acontece após o pagamento?</h2>
+              <h2 className="font-bold text-foreground">Próximos Passos</h2>
             </div>
             <div className="p-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Etapa 1 - Liberação do Portal */}
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
-                      1
-                    </div>
-                    <h4 className="font-semibold text-foreground">Liberação do Portal</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Você receberá o acesso ao Portal do Fornecedor por e-mail.
-                  </p>
-                </div>
-
-                {/* Etapa 2 - Envio de Documentos */}
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* Etapa 1 - Envio de Documentos */}
                 <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
-                      2
+                      1
                     </div>
                     <h4 className="font-semibold text-foreground">Envio de Documentos</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    No portal, faça o upload da documentação obrigatória.
+                    Acesse o Portal do Fornecedor e faça o upload da documentação obrigatória.
                   </p>
                 </div>
 
-                {/* Etapa 3 - Análise Especializada */}
+                {/* Etapa 2 - Análise Especializada */}
                 <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
-                      3
+                      2
                     </div>
                     <h4 className="font-semibold text-foreground">Análise Especializada</h4>
                   </div>
@@ -569,11 +311,11 @@ const CadastroSucesso = ({ dados, protocolo, idPedido }: CadastroSucessoProps) =
                   </p>
                 </div>
 
-                {/* Etapa 4 - Cadastro Aprovado */}
+                {/* Etapa 3 - Cadastro Aprovado */}
                 <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold">
-                      4
+                      3
                     </div>
                     <h4 className="font-semibold text-foreground">Cadastro Aprovado</h4>
                   </div>

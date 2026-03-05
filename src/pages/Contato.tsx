@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { enviarContato } from "@/lib/api";
+import { trackConversion } from "@/lib/utm";
 import { 
   Phone, 
   Mail, 
@@ -53,6 +54,9 @@ const Contato = () => {
         title: "Mensagem enviada!",
         description: "Entraremos em contato em breve.",
       });
+
+      // Disparar conversão de lead (contato)
+      trackConversion("contato_enviado");
 
       setFormData({
         nome: "",

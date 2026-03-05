@@ -24,6 +24,18 @@ export interface CadastroPayload {
   emailAcesso: string;
   senha: string;
   aceitaNotificacoes: boolean;
+  // Tracking UTM (Google Ads)
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
+  gbraid?: string;
+  gad_source?: string;
+  gad_campaignid?: string;
+  landing_page?: string;
+  referrer?: string;
 }
 
 export interface CadastroResponse {

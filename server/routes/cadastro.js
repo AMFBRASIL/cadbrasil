@@ -5,6 +5,7 @@ import { getConnection, query } from "../db.js";
 import { gerarProtocoloCadbrasil } from "../utils/protocolo.js";
 import { enviarEmailCadastro, enviarEmailNotificacao, enviarEmailContato } from "../services/email.js";
 import { gerarBoleto, gerarPix, diagnosticoPix, diagnosticoPixCob, consultarPix, diagnosticoBoleto } from "../services/gerencianet.js";
+import { uploadOfflineConversion, formatConversionDateTime } from "../services/google-ads-conversion.js";
 
 const router = Router();
 
@@ -67,6 +68,25 @@ router.post("/cadastro", async (req, res) => {
     const emailAcesso = str(body.emailAcesso) || emailResponsavel;
     const senha = str(body.senha);
     const aceitaNotificacoes = !!body.aceitaNotificacoes;
+
+    // Tracking UTM (Google Ads / campanhas)
+    const utmSource = str(body.utm_source) || null;
+    const utmMedium = str(body.utm_medium) || null;
+    const utmCampaign = str(body.utm_campaign) || null;
+    const utmTerm = str(body.utm_term) || null;
+    const utmContent = str(body.utm_content) || null;
+    const gclid = str(body.gclid) || null;
+    const gbraid = str(body.gbraid) || null;
+    const gadSource = str(body.gad_source) || null;
+    const gadCampaignId = str(body.gad_campaignid) || null;
+    const landingPage = str(body.landing_page) || null;
+    const referrer = str(body.referrer) || null;
+
+    console.log("[POST /api/cadastro] UTM recebido do frontend:", {
+      utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
+      utm_term: utmTerm, utm_content: utmContent, gclid, gbraid, gad_source: gadSource,
+      gad_campaignid: gadCampaignId, landing_page: landingPage, referrer
+    });
 
     if (!tipoPessoa) {
       return res.status(400).json({ 
@@ -168,8 +188,9 @@ router.post("/cadastro", async (req, res) => {
           RazaoSocial, NomeFantasia, Cnpjcpf, NomeResponsavel, EmailResponsavel, CpfResponsavel,
           Cargo, Cep, Endereco, Numero, ComplementoEndereco, Bairro, Cidade, Estado,
           Email, TelefoneCelular, TelefoneComercial, CodeCnae, AtividadeEmpresa,
-          SegmentoComplementar, DataCriada, ukId, ProtocoloCadbrasil, SendEMAIL, SendSMS, sourcePage
-        ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+          SegmentoComplementar, DataCriada, ukId, ProtocoloCadbrasil, SendEMAIL, SendSMS, sourcePage,
+          utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid, gbraid, gad_source, gad_campaignid, landing_page, referrer
+        ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           idTipoCliente,
           IdUsuario,
@@ -199,6 +220,17 @@ router.post("/cadastro", async (req, res) => {
           protocolo,
           sendEmail,
           "cadastro",
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmTerm,
+          utmContent,
+          gclid,
+          gbraid,
+          gadSource,
+          gadCampaignId,
+          landingPage,
+          referrer,
         ]
       );
 
@@ -507,6 +539,48 @@ router.post("/pagamento/verificar", async (req, res) => {
            WHERE IdPedido = ?`,
           [idPedido]
         );
+
+        // Google Ads: Enviar conversão offline (pagamento confirmado)
+        const gadsEnabled = (process.env.GOOGLE_ADS_CONVERSION_ENABLED || "").trim().toLowerCase() === "true";
+        if (!gadsEnabled) {
+          console.log("[Google Ads] Conversão offline DESATIVADA (GOOGLE_ADS_CONVERSION_ENABLED=false)");
+        }
+        if (gadsEnabled) try {
+          const [clienteRows] = await conn.execute(
+            `SELECT c.gclid, c.Email, c.TelefoneCelular, c.ProtocoloCadbrasil,
+                    c.utm_source, c.utm_term
+             FROM tbl_smart_pedido_credenciamento p
+             INNER JOIN tbl_smart_clientes c ON p.IdCliente = c.IdCliente
+             WHERE p.IdPedido = ?`,
+            [idPedido]
+          );
+
+          if (clienteRows.length > 0) {
+            const cliente = clienteRows[0];
+            // Só envia se tiver gclid OU email (conversões otimizadas para leads)
+            if (cliente.gclid || cliente.Email) {
+              uploadOfflineConversion({
+                gclid: cliente.gclid || null,
+                conversionDateTime: formatConversionDateTime(new Date()),
+                conversionValue: 985.00,
+                orderId: cliente.ProtocoloCadbrasil || protocolo || `pedido-${idPedido}`,
+                email: cliente.Email || null,
+                phone: cliente.TelefoneCelular || null,
+              }).then(result => {
+                if (result.success) {
+                  console.log(`[Google Ads] Conversão offline enviada para pedido ${idPedido}`);
+                } else {
+                  console.warn(`[Google Ads] Falha ao enviar conversão para pedido ${idPedido}:`, result.error);
+                }
+              }).catch(err => {
+                console.error(`[Google Ads] Exceção ao enviar conversão para pedido ${idPedido}:`, err.message);
+              });
+            }
+          }
+        } catch (gadsErr) {
+          // Não bloquear o fluxo de pagamento por erro no Google Ads
+          console.error("[Google Ads] Erro ao tentar enviar conversão offline:", gadsErr.message);
+        }
       }
 
       conn.release();

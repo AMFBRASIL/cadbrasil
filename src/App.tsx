@@ -23,6 +23,12 @@ import TermosUso from "./pages/TermosUso";
 import ScrollToTop from "./components/ScrollToTop";
 import WhatsAppButton from "./components/WhatsAppButton";
 import Redirect from "./components/Redirect";
+import Credenciamento from "./components/cadastro/credenciamento";
+import VenderParaGoverno from "./pages/VenderParaGoverno";
+import { captureUtmParams } from "./lib/utm";
+
+// Capturar UTMs o mais cedo possível (antes de qualquer navegação SPA)
+captureUtmParams();
 
 const queryClient = new QueryClient();
 
@@ -52,9 +58,12 @@ const App = () => (
             <Route path="/contato" element={<Contato />} />
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/termos-de-uso" element={<TermosUso />} />
+            <Route path="/vender-para-o-governo" element={<VenderParaGoverno />} />
+            
+            {/* Credenciamento SICAF - tela de acompanhamento */}
+            <Route path="/credenciamento" element={<Credenciamento />} />
             
             {/* Redirecionamentos de URLs antigas (PHP) para home */}
-            <Route path="/credenciamento" element={<Redirect to="/" />} />
             <Route path="/leituraia" element={<Redirect to="/" />} />
             <Route path="/consultoria" element={<Redirect to="/" />} />
             <Route path="/servicos" element={<Redirect to="/" />} />
