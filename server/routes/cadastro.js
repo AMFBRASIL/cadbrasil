@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
-import { getConnection, query } from "../db.js";
+import { getConnection } from "../db.js";
 import { gerarProtocoloCadbrasil } from "../utils/protocolo.js";
 import { enviarEmailCadastro, enviarEmailNotificacao, enviarEmailContato } from "../services/email.js";
 import { gerarBoleto, gerarPix, diagnosticoPix, diagnosticoPixCob, consultarPix, diagnosticoBoleto } from "../services/gerencianet.js";
@@ -32,6 +32,18 @@ function parseVencimento(value) {
   const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if (ymd) return s;
   return null;
+}
+
+function getAvatarIniciais(nome) {
+  if (!nome || typeof nome !== "string") return null;
+  const parts = nome.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function formatDateOnly(date) {
+  return date.toISOString().slice(0, 10);
 }
 
 router.post("/cadastro", async (req, res) => {
@@ -118,15 +130,37 @@ router.post("/cadastro", async (req, res) => {
     }
 
     const conn = await getConnection();
+    let protocolo = null;
+    let idUsuario = null;
+    let idCliente = null;
+    let idContrato = null;
+    let templateBoasVindas = null;
+    let configuracoesEmailEmpresa = [];
 
     try {
       await conn.beginTransaction();
 
-      const [existing] = await conn.execute(
-        "SELECT IdUsuario FROM tbl_smart_usuarios WHERE Email = ? LIMIT 1",
+      // 1) Leitura inicial: validar documento já cadastrado em clientes
+      const [existingCliente] = await conn.execute(
+        `SELECT id
+         FROM clientes
+         WHERE REPLACE(REPLACE(REPLACE(REPLACE(documento, '.', ''), '/', ''), '-', ''), ' ', '') = ?
+         LIMIT 1`,
+        [documentoLimpo]
+      );
+      if (existingCliente.length > 0) {
+        await conn.rollback();
+        return res.status(409).json({
+          success: false,
+          error: "Já existe cliente com este CPF/CNPJ.",
+        });
+      }
+
+      const [existingUser] = await conn.execute(
+        "SELECT id FROM usuarios WHERE email = ? LIMIT 1",
         [emailAcesso]
       );
-      if (existing.length > 0) {
+      if (existingUser.length > 0) {
         await conn.rollback();
         return res.status(409).json({
           success: false,
@@ -134,170 +168,226 @@ router.post("/cadastro", async (req, res) => {
         });
       }
 
-      const ukMail = randomUUID();
+      const [perfilRows] = await conn.execute(
+        "SELECT id FROM perfis_acesso WHERE tipo = 'cliente' AND ativo = 1 ORDER BY id ASC LIMIT 1"
+      );
+      if (perfilRows.length === 0) {
+        await conn.rollback();
+        return res.status(500).json({
+          success: false,
+          error: "Perfil de acesso do cliente não configurado na base nova.",
+        });
+      }
+
       const senhaHash = await bcrypt.hash(senha, 10);
       const now = new Date();
-      const dataCadastro = now.toISOString().slice(0, 19).replace("T", " ");
+      const today = formatDateOnly(now);
+      const nextYear = new Date(now);
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      const vencimentoContrato = formatDateOnly(nextYear);
+      const avatarIniciais = getAvatarIniciais(nomeResponsavel);
+      const protocoloCadastro = gerarProtocoloCadbrasil();
+      // Persistir exatamente como veio do formulário (com máscara)
+      const documentoFormatado = documento;
+      const enderecoCompleto = [logradouro, numero, complemento].filter(Boolean).join(", ") || null;
+      const observacoesCliente = [
+        `Protocolo: ${protocoloCadastro}`,
+        `Origem: site`,
+        tipoServico ? `Tipo serviço: ${tipoServico}` : null,
+        [segmentoAtuacao, objetivoLicitacao].filter(Boolean).join(" | ") || null,
+      ].filter(Boolean).join(" | ");
 
-      // 1. Primeiro: Inserir em tbl_smart_usuarios
+      // Usuário para satisfazer FK de clientes.usuario_id
       const [resultUsuario] = await conn.execute(
-        `INSERT INTO tbl_smart_usuarios (
-          IdGrupo, IdStatus, IdSistema, Nome, Contato, Email, Senha, Telefone, CellPhone,
-          DataCadastro, ukMail
-        ) VALUES (?, 4, 2, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO usuarios (
+          nome, email, senha_hash, telefone, avatar_iniciais, departamento, perfil_id, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Ativo')`,
         [
-          null,
-          nomeResponsavel,
           nomeResponsavel,
           emailAcesso,
           senhaHash,
           telefoneResponsavel || null,
-          telefoneResponsavel || null,
-          dataCadastro,
-          ukMail,
+          avatarIniciais,
+          "Portal Cliente",
+          perfilRows[0].id,
         ]
       );
+      idUsuario = resultUsuario.insertId;
 
-      // 2. Obter o IdUsuario gerado automaticamente (LAST_INSERT_ID)
-      const IdUsuario = resultUsuario.insertId;
-      if (!IdUsuario) {
-        await conn.rollback();
-        return res.status(500).json({ success: false, error: "Erro ao obter ID do usuário criado." });
-      }
-
-      // 3. Preparar dados para tbl_smart_clientes
-      const protocolo = gerarProtocoloCadbrasil();
-      const cpfLimpo = cpfResponsavel ? strip(cpfResponsavel) : null;
-      const cepLimpo = cep ? strip(cep) : null;
-      const segmento = [segmentoAtuacao, objetivoLicitacao].filter(Boolean).join(" | ") || null;
-      const idTipoCadastro = tipoServico === "renovacao" ? 2 : 1;
-      const dataCriada = dataCadastro;
-      const ukId = randomUUID();
-      const sendEmail = aceitaNotificacoes ? 1 : 0;
-
-      // 4. Segundo: Inserir em tbl_smart_clientes usando o IdUsuario obtido acima
-      // IdTipoCliente: 3 = Pessoa Física, 4 = Pessoa Jurídica
-      const idTipoCliente = isCPF ? 3 : 4; // 3 = CPF, 4 = CNPJ
-      
-      // Salvar documento COM formatação (pontos, hífens, barras)
-      const documentoFormatado = documento; // Manter formatação original
-      
+      // 2) INSERT clientes
       const [resultCliente] = await conn.execute(
-        `INSERT INTO tbl_smart_clientes (
-          IdTipoCliente, IdUsuario, IdTipoCadastro, IdSistema,
-          RazaoSocial, NomeFantasia, Cnpjcpf, NomeResponsavel, EmailResponsavel, CpfResponsavel,
-          Cargo, Cep, Endereco, Numero, ComplementoEndereco, Bairro, Cidade, Estado,
-          Email, TelefoneCelular, TelefoneComercial, CodeCnae, AtividadeEmpresa,
-          SegmentoComplementar, DataCriada, ukId, ProtocoloCadbrasil, SendEMAIL, SendSMS, sourcePage,
-          utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid, gbraid, gad_source, gad_campaignid, landing_page, referrer
-        ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO clientes (
+          usuario_id, tipo_documento, documento, razao_social, nome_fantasia,
+          email, telefone, celular, endereco, cidade, estado, cep,
+          ramo_atividade, responsavel_nome, responsavel_cpf, responsavel_email, responsavel_telefone,
+          status, observacoes, ProtocoloCadbrasil
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pendente', ?, ?)`,
         [
-          idTipoCliente,
-          IdUsuario,
-          idTipoCadastro,
+          idUsuario,
+          isCPF ? "CPF" : "CNPJ",
+          documentoFormatado,
           razaoSocial,
           nomeFantasia,
-          documentoFormatado,
-          nomeResponsavel,
           emailResponsavel,
-          cpfLimpo,
-          cargoResponsavel,
-          cepLimpo,
-          logradouro,
-          numero,
-          complemento,
-          bairro,
+          telefoneResponsavel,
+          telefoneResponsavel,
+          enderecoCompleto,
           cidade,
           uf,
+          cep,
+          cnae,
+          nomeResponsavel,
+          cpfResponsavel,
           emailResponsavel,
           telefoneResponsavel,
-          telefoneResponsavel,
-          cnae,
-          cnae,
-          segmento,
-          dataCriada,
-          ukId,
-          protocolo,
-          sendEmail,
-          "cadastro",
-          utmSource,
-          utmMedium,
-          utmCampaign,
-          utmTerm,
-          utmContent,
-          gclid,
-          gbraid,
-          gadSource,
-          gadCampaignId,
-          landingPage,
-          referrer,
+          observacoesCliente || null,
+          protocoloCadastro,
         ]
       );
+      idCliente = resultCliente.insertId;
 
-      // 5. Obter o IdCliente gerado automaticamente (LAST_INSERT_ID)
-      const IdCliente = resultCliente.insertId;
+      // 3) INSERT sicaf_cadastros (status inicial Pendente)
+      const [resultSicaf] = await conn.execute(
+        `INSERT INTO sicaf_cadastros (
+          cliente_id, status, completude, credenciamento_anual, manutencao_ativa, dias_validade, observacoes
+        ) VALUES (?, 'Pendente', 0.00, 0, 0, 0, ?)`,
+        [idCliente, "Cadastro inicial via site CADBRASIL"]
+      );
+      const idSicaf = resultSicaf.insertId;
 
-      // 6. Criar pedido em tbl_smart_pedido_credenciamento
-      const dataPedido = now.toISOString().slice(0, 19).replace("T", " ");
-      const ukPedido = randomUUID();
-      
-      // Valores padrão baseados na estrutura da tabela
-      const idPlano = 47; // Valor padrão da tabela
-      const idFormaPagamento = 1; // Valor padrão da tabela
-      const idStatus = 16; // Valor padrão da tabela
-      const idStatusVerf = 32; // Valor padrão da tabela
-      
-      const [resultPedido] = await conn.execute(
-        `INSERT INTO tbl_smart_pedido_credenciamento (
-          IdCliente, IdUsuario, IdPlano, IdFormaPagamento, IdStatus, IdStatusVerf,
-          DataPedido, uk_pedido
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      // 4) INSERT sicaf_niveis (nível I desabilitado)
+      await conn.execute(
+        "INSERT INTO sicaf_niveis (sicaf_id, nivel, habilitado) VALUES (?, 'I', 0)",
+        [idSicaf]
+      );
+
+      // 5) INSERT opcional em cliente_contatos
+      if (nomeResponsavel) {
+        try {
+          // Tenta estrutura completa (bases que possuem coluna cpf)
+          await conn.execute(
+            `INSERT INTO cliente_contatos (cliente_id, nome, cpf, cargo, email, telefone, principal)
+             VALUES (?, ?, ?, ?, ?, ?, 1)`,
+            [idCliente, nomeResponsavel, cpfResponsavel, cargoResponsavel, emailResponsavel, telefoneResponsavel]
+          );
+        } catch (contactErr) {
+          if (contactErr?.code !== "ER_BAD_FIELD_ERROR") {
+            throw contactErr;
+          }
+          // Fallback para bases onde a coluna cpf ainda não existe
+          await conn.execute(
+            `INSERT INTO cliente_contatos (cliente_id, nome, cargo, email, telefone, principal)
+             VALUES (?, ?, ?, ?, ?, 1)`,
+            [idCliente, nomeResponsavel, cargoResponsavel, emailResponsavel, telefoneResponsavel]
+          );
+        }
+      }
+
+      // 6) INSERT contratos_digitais (plano padrão e status Assinado)
+      const [resultContrato] = await conn.execute(
+        `INSERT INTO contratos_digitais (
+          cliente_id, plano, data_inicio, data_vencimento, status, assinado_em, assinado_por, ip_assinatura, observacoes
+        ) VALUES (?, 'Licença + Manutenção', ?, ?, 'Assinado', NOW(), ?, ?, ?)`,
         [
-          IdCliente,
-          IdUsuario,
-          idPlano,
-          idFormaPagamento,
-          idStatus,
-          idStatusVerf,
-          dataPedido,
-          ukPedido,
+          idCliente,
+          today,
+          vencimentoContrato,
+          nomeResponsavel,
+          req.ip || null,
+          `Contrato criado automaticamente no cadastro. ${protocoloCadastro}`,
         ]
       );
+      idContrato = resultContrato.insertId;
+      protocolo = protocoloCadastro;
 
-      const IdPedido = resultPedido.insertId;
+      // Tracking Google Ads na base nova (não bloqueante)
+      try {
+        await conn.execute(
+          `INSERT INTO tracking_sessoes (
+            session_id, cliente_id, usuario_id, utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+            gclid, gbraid, gad_source, landing_page, referrer, user_agent, converted, conversion_type, conversion_at,
+            funnel_step, last_activity_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'signup', NOW(), 'signup', NOW())`,
+          [
+            randomUUID(),
+            idCliente,
+            idUsuario,
+            utmSource,
+            utmMedium,
+            utmCampaign || gadCampaignId || null,
+            utmTerm,
+            utmContent,
+            gclid,
+            gbraid,
+            gadSource,
+            landingPage,
+            referrer,
+            req.get("user-agent") || null,
+          ]
+        );
+      } catch (trackingErr) {
+        console.warn("[POST /api/cadastro] Falha ao gravar tracking_sessoes:", trackingErr.message);
+      }
 
       await conn.commit();
 
-      // Enviar email de confirmação (não bloqueia a resposta)
+      // 7) SELECT template ativo de boas-vindas
+      try {
+        const [templateRows] = await conn.execute(
+          `SELECT id, nome, assunto, corpo_html
+           FROM templates_email
+           WHERE ativo = 1 AND nome LIKE 'Bem-vindo%'
+           ORDER BY id ASC
+           LIMIT 1`
+        );
+        templateBoasVindas = templateRows[0] || null;
+      } catch (templateErr) {
+        console.warn("[POST /api/cadastro] Falha ao buscar templates_email:", templateErr.message);
+      }
+
+      // 8) SELECT configurações SMTP e dados da empresa
+      try {
+        const [configRows] = await conn.execute(
+          `SELECT chave, valor
+           FROM configuracoes_sistema
+           WHERE categoria IN ('email', 'empresa')`
+        );
+        configuracoesEmailEmpresa = configRows || [];
+      } catch (configErr) {
+        console.warn("[POST /api/cadastro] Falha ao buscar configuracoes_sistema:", configErr.message);
+      }
+
+      // Envio de email (não bloqueante)
       enviarEmailCadastro({
         emailResponsavel,
         nomeResponsavel,
         razaoSocial,
         protocolo,
         tipoServico,
-        cnpj: documentoFormatado, // Usar formato completo para exibição no email
+        template: templateBoasVindas,
+        configuracoes: configuracoesEmailEmpresa,
       }).catch((emailError) => {
         console.error("[POST /api/cadastro] Erro ao enviar email:", emailError);
-        // Não falha o cadastro se o email falhar
       });
 
-      // Enviar email de notificação interna (opcional, não bloqueia)
-      enviarEmailNotificacao({
-        razaoSocial,
-        cnpj: documentoFormatado, // Usar formato completo para exibição no email
-        protocolo,
-        tipoServico,
-        emailResponsavel,
-      }).catch((emailError) => {
-        console.error("[POST /api/cadastro] Erro ao enviar notificação:", emailError);
-      });
+      if (aceitaNotificacoes) {
+        enviarEmailNotificacao({
+          razaoSocial,
+          cnpj: documento,
+          protocolo,
+          tipoServico,
+          emailResponsavel,
+        }).catch((emailError) => {
+          console.error("[POST /api/cadastro] Erro ao enviar notificação:", emailError);
+        });
+      }
 
       return res.status(201).json({
         success: true,
         protocolo,
-        idUsuario: IdUsuario,
-        idCliente: IdCliente,
-        idPedido: IdPedido,
+        idUsuario: idUsuario,
+        idCliente: idCliente,
+        idPedido: idContrato,
       });
     } catch (e) {
       await conn.rollback();
@@ -363,12 +453,56 @@ function mapCnpjWsToFrontend(raw) {
 router.get("/cnpj/:cnpj", async (req, res) => {
   try {
     const cnpj = req.params.cnpj.replace(/\D/g, "");
-    let apiToken = (process.env.CNPJ_WS_API_TOKEN || process.env.RECEITAWS_API_TOKEN || "").trim();
-    apiToken = apiToken.replace(/^["']|["']$/g, ""); // remove aspas do .env
 
     if (cnpj.length !== 14) {
       return res.status(400).json({ success: false, error: "CNPJ deve ter 14 dígitos." });
     }
+
+    // Prioridade: buscar no banco novo primeiro
+    try {
+      const conn = await getConnection();
+      try {
+        const [clientes] = await conn.execute(
+          `SELECT razao_social, nome_fantasia, cep, endereco, cidade, estado, ramo_atividade
+           FROM clientes
+           WHERE tipo_documento = 'CNPJ'
+             AND REPLACE(REPLACE(REPLACE(REPLACE(documento, '.', ''), '/', ''), '-', ''), ' ', '') = ?
+           LIMIT 1`,
+          [cnpj]
+        );
+
+        if (clientes.length > 0) {
+          const c = clientes[0];
+          return res.json({
+            success: true,
+            data: {
+              nome: c.razao_social || "",
+              fantasia: c.nome_fantasia || "",
+              cep: c.cep || "",
+              logradouro: c.endereco || "",
+              numero: "",
+              complemento: "",
+              bairro: "",
+              municipio: c.cidade || "",
+              uf: c.estado || "",
+              atividade_principal: [
+                {
+                  text: c.ramo_atividade || "",
+                  code: "",
+                },
+              ],
+            },
+          });
+        }
+      } finally {
+        conn.release();
+      }
+    } catch (dbErr) {
+      console.warn("[GET /api/cnpj/:cnpj] Falha ao consultar base local:", dbErr.message);
+    }
+
+    let apiToken = (process.env.CNPJ_WS_API_TOKEN || process.env.RECEITAWS_API_TOKEN || "").trim();
+    apiToken = apiToken.replace(/^["']|["']$/g, ""); // remove aspas do .env
 
     if (!apiToken || apiToken === "123") {
       return res.status(401).json({
@@ -473,18 +607,16 @@ router.post("/renovacao/verificar", async (req, res) => {
     const conn = await getConnection();
 
     try {
-      // Buscar cliente na tabela tbl_smart_clientes pelo CPF/CNPJ
-      // Buscar tanto com formatação quanto sem (pode estar salvo de ambas as formas)
-      // Buscar também o email através do IdUsuario relacionado
+      // Buscar cliente no schema novo
       const [clientes] = await conn.execute(
         `SELECT 
-           c.IdCliente, 
-           c.Cnpjcpf,
-           c.IdUsuario,
-           u.Email
-         FROM tbl_smart_clientes c
-         LEFT JOIN tbl_smart_usuarios u ON c.IdUsuario = u.IdUsuario
-         WHERE REPLACE(REPLACE(REPLACE(REPLACE(c.Cnpjcpf, '.', ''), '/', ''), '-', ''), ' ', '') = ? 
+           c.id AS id_cliente,
+           c.documento,
+           c.usuario_id,
+           u.email
+         FROM clientes c
+         LEFT JOIN usuarios u ON c.usuario_id = u.id
+         WHERE REPLACE(REPLACE(REPLACE(REPLACE(c.documento, '.', ''), '/', ''), '-', ''), ' ', '') = ? 
          LIMIT 1`,
         [documentoLimpo]
       );
@@ -496,8 +628,8 @@ router.post("/renovacao/verificar", async (req, res) => {
         success: true,
         existe: podeRenovar,
         podeRenovar,
-        idCliente: podeRenovar ? clientes[0].IdCliente : null,
-        email: podeRenovar ? (clientes[0].Email || null) : null,
+        idCliente: podeRenovar ? clientes[0].id_cliente : null,
+        email: podeRenovar ? (clientes[0].email || null) : null,
       });
     } catch (err) {
       console.error("[POST /api/renovacao/verificar]", err);

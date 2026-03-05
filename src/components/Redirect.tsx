@@ -14,6 +14,15 @@ const Redirect = ({ to, replace = true }: RedirectProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const isExternal = /^https?:\/\//i.test(to);
+    if (isExternal) {
+      if (replace) {
+        window.location.replace(to);
+      } else {
+        window.location.assign(to);
+      }
+      return;
+    }
     navigate(to, { replace });
   }, [navigate, to, replace]);
 

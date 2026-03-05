@@ -24,6 +24,14 @@ export interface UtmData {
   captured_at: string;
 }
 
+declare global {
+  interface Window {
+    gtag?: (...args: [string, ...unknown[]]) => void;
+    dataLayer?: Record<string, unknown>[];
+    uetq?: (string | Record<string, unknown>)[];
+  }
+}
+
 const STORAGE_KEY = "cadbrasil_utm";
 
 /**
@@ -142,11 +150,10 @@ export function trackConversion(
     const utm = getUtmParams();
     
     // Google Ads gtag conversion
-    if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
       const gtagParams: Record<string, unknown> = {
         send_to: "AW-16460586067",
         ...(value !== undefined && { value, currency: "BRL" }),
-        // Dados UTM como parâmetros customizados
         ...(utm?.utm_term && { keyword: utm.utm_term }),
         ...(utm?.utm_campaign && { campaign: utm.utm_campaign }),
         ...(utm?.utm_source && { source: utm.utm_source }),
@@ -154,13 +161,13 @@ export function trackConversion(
         ...extraParams,
       };
 
-      (window as any).gtag("event", eventName, gtagParams);
+      window.gtag("event", eventName, gtagParams);
       console.log(`[Tracking] Evento '${eventName}' enviado ao Google Ads`, gtagParams);
     }
 
     // Google Tag Manager dataLayer
-    if (typeof window !== "undefined" && Array.isArray((window as any).dataLayer)) {
-      (window as any).dataLayer.push({
+    if (typeof window !== "undefined" && Array.isArray(window.dataLayer)) {
+      window.dataLayer.push({
         event: eventName,
         ...(value !== undefined && { conversionValue: value, currency: "BRL" }),
         utmSource: utm?.utm_source || "",
@@ -174,8 +181,8 @@ export function trackConversion(
     }
 
     // Microsoft Ads (UET)
-    if (typeof window !== "undefined" && Array.isArray((window as any).uetq)) {
-      (window as any).uetq.push("event", eventName, {
+    if (typeof window !== "undefined" && Array.isArray(window.uetq)) {
+      window.uetq.push("event", eventName, {
         revenue_value: value || 0,
         currency: "BRL",
       });

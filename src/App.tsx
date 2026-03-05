@@ -23,7 +23,6 @@ import TermosUso from "./pages/TermosUso";
 import ScrollToTop from "./components/ScrollToTop";
 import WhatsAppButton from "./components/WhatsAppButton";
 import Redirect from "./components/Redirect";
-import Credenciamento from "./components/cadastro/credenciamento";
 import VenderParaGoverno from "./pages/VenderParaGoverno";
 import { captureUtmParams } from "./lib/utm";
 
@@ -60,8 +59,8 @@ const App = () => (
             <Route path="/termos-de-uso" element={<TermosUso />} />
             <Route path="/vender-para-o-governo" element={<VenderParaGoverno />} />
             
-            {/* Credenciamento SICAF - tela de acompanhamento */}
-            <Route path="/credenciamento" element={<Credenciamento />} />
+            {/* Credenciamento SICAF - redireciona para o portal */}
+            <Route path="/credenciamento" element={<Redirect to="https://fornecedor.cadbrasil.com.br/" />} />
             
             {/* Redirecionamentos de URLs antigas (PHP) para home */}
             <Route path="/leituraia" element={<Redirect to="/" />} />

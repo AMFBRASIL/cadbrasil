@@ -29,11 +29,31 @@ const modalidades = [
 ];
 
 const portes = [
-  { value: "mei", label: "MEI - Microempreendedor Individual" },
-  { value: "me", label: "ME - Microempresa" },
-  { value: "epp", label: "EPP - Empresa de Pequeno Porte" },
-  { value: "medio", label: "Empresa de Médio Porte" },
-  { value: "grande", label: "Empresa de Grande Porte" },
+  {
+    value: "mei",
+    label: "MEI",
+    description: "Microempreendedor Individual",
+  },
+  {
+    value: "me",
+    label: "ME",
+    description: "Microempresa",
+  },
+  {
+    value: "epp",
+    label: "EPP",
+    description: "Empresa de Pequeno Porte",
+  },
+  {
+    value: "medio",
+    label: "Médio Porte",
+    description: "Empresa em crescimento",
+  },
+  {
+    value: "grande",
+    label: "Grande Porte",
+    description: "Empresa de grande porte",
+  },
 ];
 
 const EtapaLicitacao = ({ dados, atualizarDados, onProximo, onAnterior }: EtapaLicitacaoProps) => {
@@ -113,22 +133,22 @@ const EtapaLicitacao = ({ dados, atualizarDados, onProximo, onAnterior }: EtapaL
           <RadioGroup
             value={dados.objetivoLicitacao}
             onValueChange={(value) => atualizarDados({ objetivoLicitacao: value })}
-            className="space-y-2"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
           >
             {portes.map((porte) => (
-              <div
+              <Label
                 key={porte.value}
-                className={`flex items-center space-x-3 p-3 border transition-colors cursor-pointer ${
+                htmlFor={porte.value}
+                className={`relative flex min-h-[78px] flex-col justify-center rounded-md border p-2.5 transition-colors cursor-pointer ${
                   dados.objetivoLicitacao === porte.value
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border hover:border-primary/50 hover:bg-muted/30"
                 }`}
               >
-                <RadioGroupItem value={porte.value} id={porte.value} />
-                <Label htmlFor={porte.value} className="font-normal cursor-pointer flex-1">
-                  {porte.label}
-                </Label>
-              </div>
+                <RadioGroupItem value={porte.value} id={porte.value} className="absolute right-2 top-2 scale-90" />
+                <span className="text-xs font-semibold text-foreground pr-6 leading-tight">{porte.label}</span>
+                <span className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{porte.description}</span>
+              </Label>
             ))}
           </RadioGroup>
           {errors.objetivoLicitacao && (
