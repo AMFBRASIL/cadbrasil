@@ -24,6 +24,10 @@ import ScrollToTop from "./components/ScrollToTop";
 import WhatsAppButton from "./components/WhatsAppButton";
 import Redirect from "./components/Redirect";
 import VenderParaGoverno from "./pages/VenderParaGoverno";
+import AssistenteSicaf from "./pages/AssistenteSicaf";
+import ServicosCadbrasil from "./pages/ServicosCadbrasil";
+import Central from "./pages/Central";
+import IniciarProcessoLicitacao from "./pages/IniciarProcessoLicitacao";
 import { captureUtmParams } from "./lib/utm";
 
 // Capturar UTMs o mais cedo possível (antes de qualquer navegação SPA)
@@ -58,6 +62,10 @@ const App = () => (
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/termos-de-uso" element={<TermosUso />} />
             <Route path="/vender-para-o-governo" element={<VenderParaGoverno />} />
+            <Route path="/assistente-sicaf" element={<AssistenteSicaf />} />
+            <Route path="/servicos-cadbrasil" element={<ServicosCadbrasil />} />
+            <Route path="/central" element={<Central />} />
+            <Route path="/iniciar-processo-licitacao" element={<IniciarProcessoLicitacao />} />
             
             {/* Credenciamento SICAF - redireciona para o portal */}
             <Route path="/credenciamento" element={<Redirect to="https://fornecedor.cadbrasil.com.br/" />} />

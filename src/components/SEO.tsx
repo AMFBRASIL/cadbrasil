@@ -1,10 +1,20 @@
 import { Helmet } from "react-helmet-async";
 
+/** Tema principal da página (substitui o padrão “Cadastro SICAF” no WebPage JSON-LD). */
+export interface WebPageAboutProps {
+  name: string;
+  description?: string;
+  /** URL(s) relacionadas (ex.: Chrome Web Store). */
+  sameAs?: string | string[];
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
   canonical?: string;
   ogImage?: string;
+  /** Texto alternativo específico para og:image e Twitter (acessibilidade e SEO de imagem). */
+  ogImageAlt?: string;
   ogType?: "website" | "article" | "product" | "service";
   twitterCard?: "summary" | "summary_large_image";
   noIndex?: boolean;
@@ -23,6 +33,17 @@ interface SEOProps {
   alternateLanguages?: Array<{ lang: string; url: string }>;
   nextPage?: string;
   prevPage?: string;
+  /** Ajusta o campo `about` do WebPage no JSON-LD (relevância semântica por URL). */
+  webPageAbout?: WebPageAboutProps;
+  /**
+   * Seletores CSS de trechos “speakable” (Google Assistente / voz). Ex.: [".hero-lead", "h1"]
+   */
+  speakableCssSelectors?: string[];
+  /**
+   * Inclui o schema genérico Service “Cadastro SICAF…” (padrão: true).
+   * Desative em páginas de produto/software para não diluir o tema da página.
+   */
+  includeDefaultServiceSchema?: boolean;
 }
 
 const SITE_NAME = "CADBRASIL";
@@ -36,6 +57,7 @@ const SEO = ({
   description = DEFAULT_DESCRIPTION,
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
+  ogImageAlt,
   ogType = "website",
   twitterCard = "summary_large_image",
   noIndex = false,
@@ -48,6 +70,9 @@ const SEO = ({
   alternateLanguages,
   nextPage,
   prevPage,
+  webPageAbout,
+  speakableCssSelectors,
+  includeDefaultServiceSchema = true,
 }: SEOProps) => {
   const pageTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const canonicalUrl = canonical ? `${SITE_URL}${canonical}` : `${SITE_URL}${canonical || "/"}`;
@@ -175,15 +200,34 @@ const SEO = ({
         keywords: article.tags?.join(", "),
         mainEntityOfPage: {
           "@type": "WebPage",
-          "@id": canonicalUrl,
+          "@id": `${canonicalUrl}#webpage`,
         },
       }
     : null;
+
+  const webPageAboutThing = webPageAbout
+    ? {
+        "@type": "Thing" as const,
+        name: webPageAbout.name,
+        ...(webPageAbout.description ? { description: webPageAbout.description } : {}),
+        ...(webPageAbout.sameAs
+          ? {
+              sameAs: Array.isArray(webPageAbout.sameAs)
+                ? webPageAbout.sameAs
+                : webPageAbout.sameAs,
+            }
+          : {}),
+      }
+    : {
+        "@type": "Thing" as const,
+        name: "Cadastro SICAF",
+      };
 
   // WebPage JSON-LD (sempre incluído)
   const webPageJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
+    "@id": `${canonicalUrl}#webpage`,
     name: pageTitle,
     description: description,
     url: canonicalUrl,
@@ -193,18 +237,25 @@ const SEO = ({
       name: SITE_NAME,
       url: SITE_URL,
     },
-    about: {
-      "@type": "Thing",
-      name: "Cadastro SICAF",
-    },
+    about: webPageAboutThing,
+    ...(article?.publishedTime ? { datePublished: article.publishedTime } : {}),
+    ...(article?.modifiedTime ? { dateModified: article.modifiedTime } : {}),
+    ...(speakableCssSelectors && speakableCssSelectors.length > 0
+      ? {
+          speakable: {
+            "@type": "SpeakableSpecification",
+            cssSelector: speakableCssSelectors,
+          },
+        }
+      : {}),
   };
 
   // Combine JSON-LD schemas
-  const allJsonLd: object[] = [
-    organizationJsonLd,
-    serviceJsonLd,
-    webPageJsonLd,
-  ];
+  const allJsonLd: object[] = [organizationJsonLd];
+  if (includeDefaultServiceSchema) {
+    allJsonLd.push(serviceJsonLd);
+  }
+  allJsonLd.push(webPageJsonLd);
 
   if (breadcrumbJsonLd) allJsonLd.push(breadcrumbJsonLd);
   if (faqJsonLd) allJsonLd.push(faqJsonLd);
@@ -255,7 +306,7 @@ const SEO = ({
       <meta property="og:image:secure_url" content={ogImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={pageTitle} />
+      <meta property="og:image:alt" content={ogImageAlt ?? pageTitle} />
       <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:locale" content="pt_BR" />
       <meta property="og:locale:alternate" content="en_US" />
@@ -281,7 +332,7 @@ const SEO = ({
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
-      <meta name="twitter:image:alt" content={pageTitle} />
+      <meta name="twitter:image:alt" content={ogImageAlt ?? pageTitle} />
 
       {/* Mobile Meta Tags */}
       <meta name="format-detection" content="telephone=yes" />
