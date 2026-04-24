@@ -61,13 +61,13 @@ const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 mb-8 lg:mb-0">
-              <Link to="/cadastro">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="w-full sm:w-auto group">
                   Novo Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/cadastro">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="ctaOutline" size="lg" className="w-full sm:w-auto group">
                   Renovação SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -145,7 +145,7 @@ const ComoFazerCadastroSicaf = () => {
                   <div className="text-white/70 text-sm">Aprovação</div>
                 </div>
               </div>
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -297,7 +297,7 @@ const ComoFazerCadastroSicaf = () => {
               Deixe a CADBRASIL cuidar de todo o processo. Em até 3 horas seu cadastro estará ativo.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

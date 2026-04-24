@@ -244,7 +244,7 @@ const PorQueCadbrasil = () => {
               cadastramento SICAF e participação em licitações.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button size="lg" className="group">
                   Iniciar Meu Cadastro
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

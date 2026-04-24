@@ -95,7 +95,7 @@ const RenovacaoSicaf = () => {
                   <div className="text-white/70 text-sm">Monitoramento</div>
                 </div>
               </div>
-              <Link to="/cadastro?tipo=renovacao">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="group">
                   Solicitar Renovação
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -219,7 +219,7 @@ const RenovacaoSicaf = () => {
               Renove seu SICAF agora e continue participando de licitações federais.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/cadastro?tipo=renovacao">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="group">
                   Renovar Meu SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

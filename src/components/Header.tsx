@@ -60,7 +60,7 @@ const Header = () => {
               <span className="text-sm">(011) 2122-0202</span>
             </a>
             <Button variant="outline" size="sm" className="bg-white text-primary hover:bg-white/90 border-white" asChild>
-              <a href="https://fornecedor.cadbr.com.br" target="_blank" rel="noopener noreferrer">
+              <a href="https://fornecedor.cadbrasil.com.br" target="_blank" rel="noopener noreferrer">
                 Área do Fornecedor
               </a>
             </Button>
@@ -104,7 +104,7 @@ const Header = () => {
                 </a>
               ))}
               <Button variant="outline" size="default" className="mt-4 bg-white text-primary hover:bg-white/90 border-white" asChild>
-                <a href="https://fornecedor.cadbr.com.br" target="_blank" rel="noopener noreferrer">
+                <a href="https://fornecedor.cadbrasil.com.br" target="_blank" rel="noopener noreferrer">
                   Área do Fornecedor
                 </a>
               </Button>

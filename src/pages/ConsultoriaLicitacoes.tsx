@@ -216,7 +216,7 @@ const ConsultoriaLicitacoes = () => {
                   Falar com Especialista
                 </Button>
               </a>
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="outline" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

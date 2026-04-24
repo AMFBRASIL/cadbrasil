@@ -325,7 +325,7 @@ const IniciarProcessoLicitacao = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="secondary" size="lg">
-                  <Link to="/cadastro">
+                  <Link to="https://cadastro.cadbrasil.com.br">
                     <ArrowRight className="h-4 w-4" />
                     Iniciar cadastro
                   </Link>

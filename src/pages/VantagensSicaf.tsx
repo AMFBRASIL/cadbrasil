@@ -90,7 +90,7 @@ const VantagensSicaf = () => {
                 Descubra por que milhares de empresas já estão cadastradas no SICAF e aproveitando 
                 as oportunidades do mercado de licitações públicas federais.
               </p>
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Meu Cadastro
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -165,13 +165,13 @@ const VantagensSicaf = () => {
               Comece agora e tenha acesso a milhares de oportunidades.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button size="lg" className="group">
                   Novo Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/cadastro?tipo=renovacao">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="outline" size="lg" className="group">
                   Renovar Meu Cadastro
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

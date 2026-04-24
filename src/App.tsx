@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
-import Cadastro from "./pages/Cadastro";
 import NotFound from "./pages/NotFound";
 import VantagensSicaf from "./pages/VantagensSicaf";
 import SolucoesSicaf from "./pages/SolucoesSicaf";
@@ -47,7 +46,7 @@ const App = () => (
           <Routes>
             {/* Rotas principais */}
             <Route path="/" element={<Index />} />
-            <Route path="/cadastro" element={<Cadastro />} />
+            <Route path="/cadastro" element={<Redirect to="https://cadastro.cadbrasil.com.br" />} />
             <Route path="/vantagens-sicaf" element={<VantagensSicaf />} />
             <Route path="/solucoes-sicaf" element={<SolucoesSicaf />} />
             <Route path="/por-que-cadbrasil" element={<PorQueCadbrasil />} />
@@ -96,7 +95,7 @@ const App = () => (
             <Route path="/nova-lei-de-licitacoes-2024-entenda-as-propostas-e-mudancas" element={<Redirect to="/" />} />
             <Route path="/como-participar-de-licitacoes-agora-com-a-nova-lei" element={<Redirect to="/" />} />
             <Route path="/credenciamento-sicaf-digital" element={<Redirect to="/" />} />
-            <Route path="/como-se-cadastrar" element={<Redirect to="/cadastro" />} />
+            <Route path="/como-se-cadastrar" element={<Redirect to="https://cadastro.cadbrasil.com.br" />} />
             <Route path="/tag/seguro-licitacoes" element={<Redirect to="/" />} />
             <Route path="/category/departments" element={<Redirect to="/" />} />
             <Route path="/team" element={<Redirect to="/" />} />

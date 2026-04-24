@@ -234,7 +234,7 @@ const VenderParaGoverno = () => {
                   </div>
                 ))}
               </div>
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="group">
                   Quero Vender para o Governo
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -436,7 +436,7 @@ const VenderParaGoverno = () => {
                           {passo.descricao}
                         </p>
                         {passo.destaque && (
-                          <Link to="/cadastro?tipo=novo">
+                          <Link to="https://cadastro.cadbrasil.com.br">
                             <Button className="mt-3 gap-2 group" size="sm">
                               Fazer Cadastro SICAF Agora
                               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -513,7 +513,7 @@ const VenderParaGoverno = () => {
                 <p className="text-white/70 text-sm mb-4">
                   Parece muita coisa? A CADBRASIL resolve tudo para você!
                 </p>
-                <Link to="/cadastro?tipo=novo">
+                <Link to="https://cadastro.cadbrasil.com.br">
                   <Button variant="cta" size="lg" className="group">
                     Começar Meu Cadastro SICAF
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -616,13 +616,13 @@ const VenderParaGoverno = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Link to="/cadastro?tipo=novo">
+                      <Link to="https://cadastro.cadbrasil.com.br">
                         <Button size="lg" className="group w-full sm:w-auto">
                           Fazer Cadastro SICAF
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
-                      <Link to="/cadastro?tipo=renovacao">
+                      <Link to="https://cadastro.cadbrasil.com.br">
                         <Button variant="outline" size="lg" className="w-full sm:w-auto">
                           Renovar Cadastro SICAF
                         </Button>
@@ -682,7 +682,7 @@ const VenderParaGoverno = () => {
               Comece agora e tenha acesso ao maior mercado de compras do Brasil.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/cadastro?tipo=novo">
+              <Link to="https://cadastro.cadbrasil.com.br">
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

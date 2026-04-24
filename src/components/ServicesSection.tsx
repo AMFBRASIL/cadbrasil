@@ -18,7 +18,7 @@ const ServicesSection = () => {
         "Garantia de resultado",
       ],
       cta: "Solicitar Cadastro",
-      link: "/cadastro?tipo=novo",
+      link: "https://cadastro.cadbrasil.com.br",
       highlighted: false,
     },
     {
@@ -35,7 +35,7 @@ const ServicesSection = () => {
         "Alertas automáticos",
       ],
       cta: "Solicitar Renovação",
-      link: "/cadastro?tipo=renovacao",
+      link: "https://cadastro.cadbrasil.com.br",
       highlighted: true,
     },
   ];
