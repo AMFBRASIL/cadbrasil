@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, FileText, Upload, Search, Award, ArrowRight, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import SEO from "@/components/SEO";
 
 const ComoFazerCadastroSicaf = () => {
@@ -145,7 +146,7 @@ const ComoFazerCadastroSicaf = () => {
                   <div className="text-white/70 text-sm">Aprovação</div>
                 </div>
               </div>
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagComoFazerCadastroSicafCta01")}>
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -297,7 +298,7 @@ const ComoFazerCadastroSicaf = () => {
               Deixe a CADBRASIL cuidar de todo o processo. Em até 3 horas seu cadastro estará ativo.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagComoFazerCadastroSicafCta02")}>
                 <Button size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

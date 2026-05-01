@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Plus, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 
 const ServicesSection = () => {
   const services = [
@@ -18,7 +19,7 @@ const ServicesSection = () => {
         "Garantia de resultado",
       ],
       cta: "Solicitar Cadastro",
-      link: "https://cadastro.cadbrasil.com.br",
+      utmContent: "servicosCardNovoCadastro01",
       highlighted: false,
     },
     {
@@ -35,7 +36,7 @@ const ServicesSection = () => {
         "Alertas automáticos",
       ],
       cta: "Solicitar Renovação",
-      link: "https://cadastro.cadbrasil.com.br",
+      utmContent: "servicosCardRenovacaoCadastro01",
       highlighted: true,
     },
   ];
@@ -90,7 +91,7 @@ const ServicesSection = () => {
                 ))}
               </ul>
 
-              <Link to={service.link}>
+              <Link to={cadastroOutboundUrl(service.utmContent)}>
                 <Button
                   variant={service.highlighted ? "default" : "outline"}
                   size="default"

@@ -4,6 +4,7 @@
  * Fluxo:
  * 1. Quando o usuário chega no site via Google Ads, a URL contém params como:
  *    ?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_term={keyword}&utm_content=Anuncio03TOPO&gclid=xxx
+ *    Microsoft/Bing: ?utm_source=bing&...&msclkid=...
  * 2. captureUtmParams() lê esses params e salva no sessionStorage + localStorage.
  * 3. getUtmParams() recupera os dados salvos (mesmo se o usuário navegar entre páginas).
  * 4. Os dados são enviados junto com o cadastro para o backend gravar no banco.
@@ -19,6 +20,7 @@ export interface UtmData {
   gbraid: string;          // Google Ads (iOS Web-to-App)
   gad_source: string;      // Google Ads auto-tag
   gad_campaignid: string;  // Google Ads campaign ID (auto-tag)
+  msclkid: string;         // Microsoft / Bing Ads (auto-tag)
   landing_page: string;
   referrer: string;
   captured_at: string;
@@ -50,8 +52,8 @@ export function captureUtmParams(): void {
     let params = new URLSearchParams(searchString);
     
     // Se não encontrou UTMs no search, tentar extrair da URL completa
-    if (!params.has("utm_source") && !params.has("gclid")) {
-      const match = fullUrl.match(/[?&](utm_|gclid)/);
+    if (!params.has("utm_source") && !params.has("gclid") && !params.has("msclkid")) {
+      const match = fullUrl.match(/[?&](utm_|gclid|msclkid)/);
       if (match) {
         const queryPart = fullUrl.substring(fullUrl.indexOf(match[0]));
         params = new URLSearchParams(queryPart.startsWith("?") ? queryPart : "?" + queryPart);
@@ -62,16 +64,17 @@ export function captureUtmParams(): void {
                         params.has("utm_campaign") || params.has("utm_term") || 
                         params.has("utm_content") || params.has("gclid") ||
                         params.has("gbraid") || params.has("gad_source") || 
-                        params.has("gad_campaignid");
+                        params.has("gad_campaignid") || params.has("msclkid");
     
     if (!hasTracking) return;
 
     // Se não tem utm_source mas tem gclid/gad_source, preencher automaticamente
     const hasGoogleAuto = params.has("gclid") || params.has("gad_source") || params.has("gbraid");
+    const hasMsclk = params.has("msclkid");
 
     const utmData: UtmData = {
-      utm_source: params.get("utm_source") || (hasGoogleAuto ? "google" : ""),
-      utm_medium: params.get("utm_medium") || (hasGoogleAuto ? "cpc" : ""),
+      utm_source: params.get("utm_source") || (hasGoogleAuto ? "google" : hasMsclk ? "bing" : ""),
+      utm_medium: params.get("utm_medium") || (hasGoogleAuto || hasMsclk ? "cpc" : ""),
       utm_campaign: params.get("utm_campaign") || params.get("gad_campaignid") || "",
       utm_term: params.get("utm_term") || "",
       utm_content: params.get("utm_content") || "",
@@ -79,6 +82,7 @@ export function captureUtmParams(): void {
       gbraid: params.get("gbraid") || "",
       gad_source: params.get("gad_source") || "",
       gad_campaignid: params.get("gad_campaignid") || "",
+      msclkid: params.get("msclkid") || "",
       landing_page: window.location.pathname + window.location.search,
       referrer: document.referrer || "",
       captured_at: new Date().toISOString(),
@@ -130,6 +134,7 @@ export function getUtmForPayload(): Record<string, string> {
     gbraid: utm?.gbraid || "",
     gad_source: utm?.gad_source || "",
     gad_campaignid: utm?.gad_campaignid || "",
+    msclkid: utm?.msclkid || "",
     landing_page: utm?.landing_page || "",
     referrer: utm?.referrer || "",
   };

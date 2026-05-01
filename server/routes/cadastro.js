@@ -89,6 +89,7 @@ router.post("/cadastro", async (req, res) => {
     const utmContent = str(body.utm_content) || null;
     const gclid = str(body.gclid) || null;
     const gbraid = str(body.gbraid) || null;
+    const msclkid = str(body.msclkid) || null;
     const gadSource = str(body.gad_source) || null;
     const gadCampaignId = str(body.gad_campaignid) || null;
     const landingPage = str(body.landing_page) || null;
@@ -96,7 +97,7 @@ router.post("/cadastro", async (req, res) => {
 
     console.log("[POST /api/cadastro] UTM recebido do frontend:", {
       utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
-      utm_term: utmTerm, utm_content: utmContent, gclid, gbraid, gad_source: gadSource,
+      utm_term: utmTerm, utm_content: utmContent, gclid, gbraid, msclkid, gad_source: gadSource,
       gad_campaignid: gadCampaignId, landing_page: landingPage, referrer
     });
 
@@ -305,9 +306,9 @@ router.post("/cadastro", async (req, res) => {
         await conn.execute(
           `INSERT INTO tracking_sessoes (
             session_id, cliente_id, usuario_id, utm_source, utm_medium, utm_campaign, utm_term, utm_content,
-            gclid, gbraid, gad_source, landing_page, referrer, user_agent, converted, conversion_type, conversion_at,
+            gclid, gbraid, msclkid, gad_source, landing_page, referrer, user_agent, converted, conversion_type, conversion_at,
             funnel_step, last_activity_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'signup', NOW(), 'signup', NOW())`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'signup', NOW(), 'signup', NOW())`,
           [
             randomUUID(),
             idCliente,
@@ -319,6 +320,7 @@ router.post("/cadastro", async (req, res) => {
             utmContent,
             gclid,
             gbraid,
+            msclkid,
             gadSource,
             landingPage,
             referrer,

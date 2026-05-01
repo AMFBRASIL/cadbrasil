@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, Shield, Users, FileCheck, Headphones, TrendingUp, Award, Brain, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import SEO from "@/components/SEO";
 
 const PorQueCadbrasil = () => {
@@ -244,7 +245,7 @@ const PorQueCadbrasil = () => {
               cadastramento SICAF e participação em licitações.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagPorQueCadbrasilCta01")}>
                 <Button size="lg" className="group">
                   Iniciar Meu Cadastro
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

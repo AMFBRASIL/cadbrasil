@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Phone, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 
 const CTASection = () => {
   return (
@@ -17,13 +18,13 @@ const CTASection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-            <Link to="https://cadastro.cadbrasil.com.br">
+            <Link to={cadastroOutboundUrl("ctaRodapeNovoCadastro01")}>
               <Button variant="cta" size="lg" className="w-full sm:w-auto group">
                 Novo Cadastro SICAF
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="https://cadastro.cadbrasil.com.br">
+            <Link to={cadastroOutboundUrl("ctaRodapeRenovacaoCadastro01")}>
               <Button variant="ctaOutline" size="lg" className="w-full sm:w-auto group">
                 Renovação SICAF
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

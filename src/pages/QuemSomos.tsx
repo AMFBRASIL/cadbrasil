@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import { 
   Building2, 
   Target, 
@@ -258,7 +259,7 @@ const QuemSomos = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" variant="secondary" asChild>
-                  <Link to="https://cadastro.cadbrasil.com.br" className="gap-2">
+                  <Link to={cadastroOutboundUrl("pagQuemSomosCta01")} className="gap-2">
                     Iniciar Cadastro
                     <ArrowRight className="w-4 h-4" />
                   </Link>

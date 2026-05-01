@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Plus, Clock, FileText, Shield, Users, Award, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import SEO from "@/components/SEO";
 
 const CadastroSicafNovo = () => {
@@ -113,7 +114,7 @@ const CadastroSicafNovo = () => {
                   <div className="text-white/70 text-sm">Garantia</div>
                 </div>
               </div>
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagCadastroSicafNovoHero01")}>
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Meu Cadastro
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -197,7 +198,7 @@ const CadastroSicafNovo = () => {
                   <p className="text-white/80 mb-6">
                     Se o cadastro não for aprovado, devolvemos 100% do valor pago.
                   </p>
-                  <Link to="https://cadastro.cadbrasil.com.br">
+                  <Link to={cadastroOutboundUrl("pagCadastroSicafNovoGarantia01")}>
                     <Button variant="cta" size="lg" className="group">
                       Começar Agora
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -246,7 +247,7 @@ const CadastroSicafNovo = () => {
               de negócio em licitações federais.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagCadastroSicafNovoCtaFinal01")}>
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

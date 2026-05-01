@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Search, FileText, Users, Shield, BarChart3, Brain, ArrowRight, Phone, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import SEO from "@/components/SEO";
 
 const ConsultoriaLicitacoes = () => {
@@ -216,7 +217,7 @@ const ConsultoriaLicitacoes = () => {
                   Falar com Especialista
                 </Button>
               </a>
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagConsultoriaLicitacoesCta01")}>
                 <Button variant="outline" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

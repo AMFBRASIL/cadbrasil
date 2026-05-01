@@ -28,6 +28,7 @@ import ServicosCadbrasil from "./pages/ServicosCadbrasil";
 import Central from "./pages/Central";
 import IniciarProcessoLicitacao from "./pages/IniciarProcessoLicitacao";
 import { captureUtmParams } from "./lib/utm";
+import { cadastroOutboundUrl } from "./lib/cadastroLinks";
 
 // Capturar UTMs o mais cedo possível (antes de qualquer navegação SPA)
 captureUtmParams();
@@ -46,7 +47,7 @@ const App = () => (
           <Routes>
             {/* Rotas principais */}
             <Route path="/" element={<Index />} />
-            <Route path="/cadastro" element={<Redirect to="https://cadastro.cadbrasil.com.br" />} />
+            <Route path="/cadastro" element={<Redirect to={cadastroOutboundUrl("redirectRotaCadastro")} />} />
             <Route path="/vantagens-sicaf" element={<VantagensSicaf />} />
             <Route path="/solucoes-sicaf" element={<SolucoesSicaf />} />
             <Route path="/por-que-cadbrasil" element={<PorQueCadbrasil />} />
@@ -95,7 +96,7 @@ const App = () => (
             <Route path="/nova-lei-de-licitacoes-2024-entenda-as-propostas-e-mudancas" element={<Redirect to="/" />} />
             <Route path="/como-participar-de-licitacoes-agora-com-a-nova-lei" element={<Redirect to="/" />} />
             <Route path="/credenciamento-sicaf-digital" element={<Redirect to="/" />} />
-            <Route path="/como-se-cadastrar" element={<Redirect to="https://cadastro.cadbrasil.com.br" />} />
+            <Route path="/como-se-cadastrar" element={<Redirect to={cadastroOutboundUrl("redirectRotaComoSeCadastrar")} />} />
             <Route path="/tag/seguro-licitacoes" element={<Redirect to="/" />} />
             <Route path="/category/departments" element={<Redirect to="/" />} />
             <Route path="/team" element={<Redirect to="/" />} />

@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 
 const PAGE_PATH = "/iniciar-processo-licitacao";
 const SITE_URL = "https://cadbrasil.com.br";
@@ -325,7 +326,7 @@ const IniciarProcessoLicitacao = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="secondary" size="lg">
-                  <Link to="https://cadastro.cadbrasil.com.br">
+                  <Link to={cadastroOutboundUrl("pagIniciarProcessoLicitacaoCta01")}>
                     <ArrowRight className="h-4 w-4" />
                     Iniciar cadastro
                   </Link>

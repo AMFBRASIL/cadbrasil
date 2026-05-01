@@ -19,6 +19,7 @@ import {
   Scale,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import SEO from "@/components/SEO";
 
 const ROTA = "/como-fazer-o-cadastro-no-sistema-de-cadastramento-unificado-sicaf";
@@ -207,7 +208,7 @@ const ComoFazerCadastroSistemaUnificadoSicaf = () => {
                   <div className="text-white/70 text-sm">Aprovação</div>
                 </div>
               </div>
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagSistemaUnificadoSicafCta01")}>
                 <Button variant="cta" size="lg" className="group">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -387,7 +388,7 @@ const ComoFazerCadastroSistemaUnificadoSicaf = () => {
               realizamos o reembolso integral. Taxa de aprovação de 98%.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagSistemaUnificadoSicafCta02")}>
                 <Button variant="cta" size="lg" className="group bg-white text-primary hover:bg-white/90">
                   Iniciar Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

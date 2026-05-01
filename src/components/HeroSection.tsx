@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, FileText, Globe, CheckCircle2, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import heroGovernment from "@/assets/hero-government.jpg";
 
 const HeroSection = () => {
@@ -61,13 +62,13 @@ const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 mb-8 lg:mb-0">
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("heroNovoCadastro01")}>
                 <Button variant="cta" size="lg" className="w-full sm:w-auto group">
                   Novo Cadastro SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("heroRenovacaoCadastro01")}>
                 <Button variant="ctaOutline" size="lg" className="w-full sm:w-auto group">
                   Renovação SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, RefreshCw, Clock, FileCheck, AlertTriangle, Shield, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cadastroOutboundUrl } from "@/lib/cadastroLinks";
 import SEO from "@/components/SEO";
 
 const RenovacaoSicaf = () => {
@@ -95,7 +96,7 @@ const RenovacaoSicaf = () => {
                   <div className="text-white/70 text-sm">Monitoramento</div>
                 </div>
               </div>
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagRenovacaoSicafHero01")}>
                 <Button variant="cta" size="lg" className="group">
                   Solicitar Renovação
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -219,7 +220,7 @@ const RenovacaoSicaf = () => {
               Renove seu SICAF agora e continue participando de licitações federais.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="https://cadastro.cadbrasil.com.br">
+              <Link to={cadastroOutboundUrl("pagRenovacaoSicafCtaFinal01")}>
                 <Button variant="cta" size="lg" className="group">
                   Renovar Meu SICAF
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

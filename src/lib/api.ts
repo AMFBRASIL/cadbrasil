@@ -34,6 +34,7 @@ export interface CadastroPayload {
   gbraid?: string;
   gad_source?: string;
   gad_campaignid?: string;
+  msclkid?: string;
   landing_page?: string;
   referrer?: string;
 }
